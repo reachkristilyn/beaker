@@ -14,7 +14,7 @@ The first application is Grant Research.
 
 Every application built within Beaker should be capable of standing on its own as a useful product while sharing a common engineering philosophy and architecture.
 
-Future applications may include accessibility analysis, event planning, resume review, robotics research, and other AI-assisted workflows.
+Future applications may include accessibility analysis, event design and planning, resume review, robotics research, and other AI-assisted workflows.
 
 ---
 
