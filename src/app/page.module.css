@@ -1,0 +1,99 @@
+.main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.intro {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.lede {
+  margin-top: 10px;
+  max-width: 56ch;
+  color: var(--muted);
+}
+
+.statusStrip {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.statusText {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.statusBar {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.statusBar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: titrate 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes titrate {
+  from {
+    transform: translateX(-40%);
+  }
+  to {
+    transform: translateX(215%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusBar::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+.errorBox {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  background: var(--error-soft);
+}
+
+.errorLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--error);
+  margin-bottom: 6px;
+}

@@ -1,0 +1,50 @@
+/* Beaker — design tokens and base styles */
+
+:root {
+  --paper: #fafbfa;
+  --surface: #ffffff;
+  --ink: #1a2321;
+  --muted: #5a6963;
+  --line: #dce3e0;
+  --accent: #0f6b5c;
+  --accent-deep: #0b5347;
+  --accent-soft: #e4f0ec;
+  --warn: #8a6a1f;
+  --warn-soft: #f6efda;
+  --error: #ac3a2f;
+  --error-soft: #faebe8;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,181 @@
+.report {
+  margin-top: 36px;
+}
+
+.reportHeader {
+  padding-bottom: 18px;
+}
+
+.orgName {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  margin-top: 4px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.section {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+}
+
+.section p {
+  max-width: 64ch;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.sectionLabel::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.list {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.plainList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.person {
+  display: grid;
+  gap: 2px;
+}
+
+.personName {
+  font-weight: 600;
+}
+
+.personRole {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.personNote {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.financials {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.financialLine {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.financialLabel {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.financialValue {
+  margin: 0;
+  font-weight: 500;
+}
+
+.financialNote {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.fit {
+  display: grid;
+  gap: 3px;
+}
+
+.fitFunder {
+  font-weight: 600;
+}
+
+.fitProgram {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.fitRationale {
+  color: var(--ink);
+  max-width: 64ch;
+}
+
+.verification {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.chip {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.high {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.medium {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.low {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+@media (max-width: 560px) {
+  .financialLine {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .verification {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
