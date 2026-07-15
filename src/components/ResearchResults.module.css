@@ -26,6 +26,7 @@
 
 .section p {
   max-width: 64ch;
+  white-space: pre-line;
 }
 
 .sectionLabel {
