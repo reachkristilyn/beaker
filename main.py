@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from agents import Runner
-from agents.grant_agents import grant_match_agent
+from beaker_agents.grant_agents import grant_match_agent
 
 load_dotenv()
 
