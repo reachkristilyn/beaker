@@ -1,27 +1,11 @@
 from dotenv import load_dotenv
-from agents import Agent, Runner, WebSearchTool
+from agents import Runner
+from agents.grant_agents import grant_match_agent
 
 load_dotenv()
 
-agent = Agent(
-    name="Grant Research Assistant",
-    instructions="""
-    Research nonprofit organizations using current public sources.
+question = input("Describe the nonprofit and funding need: ")
 
-    Summarize:
-    - mission and programs
-    - leadership and geography
-    - funding or financial information
-    - strengths
-    - unanswered questions
-
-    Clearly distinguish sourced facts from your analysis.
-    """,
-    tools=[WebSearchTool()],
-)
-
-question = input("Organization or research question: ")
-
-result = Runner.run_sync(agent, question)
+result = Runner.run_sync(grant_match_agent, question)
 
 print("\n" + result.final_output)
