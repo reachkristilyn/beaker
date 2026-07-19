@@ -3,7 +3,7 @@
 import { useState } from "react";
 import styles from "./page.module.css";
 import ResearchForm from "@/components/research/ResearchForm";
-import ResearchResults from "@/components/ResearchResults";
+import ResearchResults from "@/components/research/ResearchResults";
 import type { ResearchReport } from "@/lib/types";
 
 type Status = "idle" | "loading" | "error" | "success";
