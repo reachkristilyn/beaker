@@ -30,19 +30,25 @@ function BeakerMark() {
       aria-hidden="true"
     >
       <path
-        d="M6 3h12"
+        d="M4.5 4.5 3 3"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
       />
       <path
-        d="M8.5 3v13.5A3.5 3.5 0 0 0 12 20h0a3.5 3.5 0 0 0 3.5-3.5V3"
+        d="M4.5 4.5h15"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
       />
       <path
-        d="M8.5 12.5h7"
+        d="M6 4.5V17a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 13h12"
         stroke="var(--accent)"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -62,7 +68,11 @@ export default function RootLayout({
             <BeakerMark />
             Beaker
           </span>
-          <span className={styles.toolTag}>Grant Research · Tool 01</span>
+          <nav className={styles.toolTag}>
+            <a href="/">Grant Research · Tool 01</a>
+            {" · "}
+            <a href="/wall-designer">Wall Designer · Tool 02</a>
+          </nav>
         </header>
         {children}
         <footer className={styles.footer}>
