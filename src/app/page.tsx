@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import styles from "./page.module.css";
-import ResearchForm from "@/components/ResearchForm";
+import ResearchForm from "@/components/research/ResearchForm";
 import ResearchResults from "@/components/ResearchResults";
 import type { ResearchReport } from "@/lib/types";
 
