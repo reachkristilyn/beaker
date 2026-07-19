@@ -1,0 +1,31 @@
+.main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 24px 64px;
+  }
+  
+  .intro {
+    margin-bottom: 28px;
+  }
+  
+  .eyebrow {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  
+  .title {
+    font-size: 1.85rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  
+  .lede {
+    margin-top: 10px;
+    max-width: 56ch;
+    color: var(--muted);
+  }

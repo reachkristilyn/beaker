@@ -39,10 +39,13 @@ export default function WallGrid({
     <div
       role="grid"
       aria-label="Wall panel grid"
-      className="mx-auto grid w-fit border border-gray-300"
       style={{
+        display: "grid",
         gridTemplateColumns: `repeat(${columns}, ${cellSize}px)`,
         gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
+        margin: "0 auto",
+        width: "fit-content",
+        border: "1px solid #ccc",
       }}
     >
       {Array.from({ length: rows }).map((_, r) =>
@@ -63,8 +66,13 @@ export default function WallGrid({
                   type="button"
                   onClick={() => onPlace(r, c)}
                   aria-label={`Empty cell, row ${r + 1}, column ${c + 1}. Place ${product.name} panel.`}
-                  className="h-full w-full border border-dashed border-gray-400 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500"
-                  style={{ width: cellSize, height: cellSize }}
+                  style={{
+                    width: cellSize,
+                    height: cellSize,
+                    border: "1px dashed #999",
+                    background: "transparent",
+                    cursor: "pointer",
+                  }}        
                 />
               )}
             </div>

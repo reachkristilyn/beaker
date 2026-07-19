@@ -64,12 +64,12 @@ export default function RootLayout({
     <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>
         <header className={styles.header}>
-          <span className={styles.wordmark}>
+        <a href="/" className={styles.wordmark}>
             <BeakerMark />
             Beaker
-          </span>
+          </a>
           <nav className={styles.toolTag}>
-            <a href="/">Grant Research · Tool 01</a>
+            <a href="/research">Grant Research · Tool 01</a>
             {" · "}
             <a href="/wall-designer">Wall Designer · Tool 02</a>
           </nav>

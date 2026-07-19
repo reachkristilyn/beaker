@@ -82,8 +82,8 @@ export default function WallDesigner() {
   const tiledHeightIn = rows * PANEL_SIZE_INCHES;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <div className="flex flex-wrap items-end gap-4">
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16 }}>
         <label className="flex flex-col text-sm font-medium">
           Wall width (ft)
           <input

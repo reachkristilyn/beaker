@@ -16,17 +16,30 @@ export default function ProductPanel({ panel, product, selected, size, onSelect 
       type="button"
       onClick={() => onSelect(panel.id)}
       aria-label={`${product.name} panel, row ${panel.row + 1}, column ${panel.column + 1}, rotated ${panel.rotation} degrees${selected ? ", selected" : ""}`}
-      className={`relative block h-full w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
-        selected ? "ring-4 ring-blue-500 z-10" : ""
-      }`}
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        display: "block",
+        position: "relative",
+        overflow: "hidden",
+        padding: 0,
+        border: "none",
+        cursor: "pointer",
+        outline: selected ? "3px solid #2563eb" : "none",
+        outlineOffset: "-3px",
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={product.image}
         alt=""
-        className="h-full w-full object-cover"
-        style={{ transform: `rotate(${panel.rotation}deg)` }}
+        style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+            transform: `rotate(${panel.rotation}deg)`,
+          }}
         draggable={false}
       />
     </button>
