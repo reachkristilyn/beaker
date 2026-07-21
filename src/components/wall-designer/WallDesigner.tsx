@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlacedPanel, Rotation } from "@/types/wallDesigner";
 import { wallProducts, PANEL_SIZE_INCHES } from "@/data/wallProducts";
 import WallGrid from "./WallGrid";
-
-const MAX_GRID_WIDTH_PX = 720;
-const MAX_CELL_PX = 64;
 
 const ROTATIONS: Rotation[] = [0, 90, 180, 270];
 
@@ -19,7 +16,19 @@ export default function WallDesigner() {
   const [heightFt, setHeightFt] = useState("8");
   const [panels, setPanels] = useState<PlacedPanel[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
+  
+    const wallRef = useRef<HTMLDivElement>(null);
+    const [wallWidthPx, setWallWidthPx] = useState(500);
+  
+    useEffect(() => {
+      function measure() {
+        if (wallRef.current) setWallWidthPx(wallRef.current.offsetWidth);
+      }
+      measure();
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }, []);
+  
   const product = wallProducts[0];
 
   const widthIn = (parseFloat(widthFt) || 0) * 12;
@@ -27,9 +36,7 @@ export default function WallDesigner() {
   const columns = Math.max(0, Math.floor(widthIn / PANEL_SIZE_INCHES));
   const rows = Math.max(0, Math.floor(heightIn / PANEL_SIZE_INCHES));
 
-  const cellSize = columns > 0
-    ? Math.min(MAX_CELL_PX, Math.floor(MAX_GRID_WIDTH_PX / columns))
-    : MAX_CELL_PX;
+  const cellSize = columns > 0 ? wallWidthPx / columns : 0;
 
   const visiblePanels = useMemo(
     () => panels.filter(p => p.row < rows && p.column < columns),
@@ -134,16 +141,35 @@ export default function WallDesigner() {
         <div><dt className="inline font-semibold">Panels placed: </dt><dd className="inline">{visiblePanels.length}</dd></div>
       </dl>
 
-      <WallGrid
-        rows={rows}
-        columns={columns}
-        cellSize={cellSize}
-        panels={visiblePanels}
-        product={product}
-        selectedId={selectedId}
-        onPlace={placePanel}
-        onSelect={setSelectedId}
-      />
+      <div style={{ position: "relative", width: "100%", maxWidth: 900, margin: "0 auto" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/venues/ziegfeld.png"
+          alt="Ziegfeld venue stage render"
+          style={{ width: "100%", display: "block" }}
+          draggable={false}
+        />
+        <div
+         ref={wallRef}
+          style={{
+            position: "absolute",
+            left: "31%",
+            top: "55%",
+            width: "38%",
+          }}
+        >
+          <WallGrid
+            rows={rows}
+            columns={columns}
+            cellSize={cellSize}
+            panels={visiblePanels}
+            product={product}
+            selectedId={selectedId}
+            onPlace={placePanel}
+            onSelect={setSelectedId}
+          />
+        </div>
+      </div>
     </div>
   );
 }

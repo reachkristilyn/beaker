@@ -72,6 +72,8 @@ export default function RootLayout({
             <a href="/research">Grant Research · Tool 01</a>
             {" · "}
             <a href="/wall-designer">Wall Designer · Tool 02</a>
+            {" · "}
+            <a href="/splats">Robotics Lab · Tool 03</a> 
           </nav>
         </header>
         {children}
