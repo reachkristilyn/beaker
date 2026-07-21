@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import styles from "./layout.module.css";
+import Image from "next/image";
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -16,46 +17,17 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Beaker · Grant Research",
+  metadataBase: new URL("https://beakerresearch.org"),
+  title: "Beaker",
   description:
-    "Beaker is an AI experimentation platform. Grant Research is its first tool.",
+    "Beaker is an AI experimentation and research platform.",
+  openGraph: {
+    title: "Beaker",
+    description:
+      "Beaker is an AI experimentation and research platform.",
+    type: "website",
+  },
 };
-
-function BeakerMark() {
-  return (
-    <svg
-      className={styles.mark}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M4.5 4.5 3 3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M4.5 4.5h15"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M6 4.5V17a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V4.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M6 13h12"
-        stroke="var(--accent)"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 export default function RootLayout({
   children,
@@ -65,7 +37,14 @@ export default function RootLayout({
       <body>
         <header className={styles.header}>
         <a href="/" className={styles.wordmark}>
-            <BeakerMark />
+        <Image
+         src="/beaker-mark.png"
+         alt=""
+         width={36}
+         height={36}
+         className={styles.mark}
+         priority
+        />
             Beaker
           </a>
           <nav className={styles.toolTag}>
