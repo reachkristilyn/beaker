@@ -64,37 +64,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const reportText = (backendPayload as { report?: unknown })?.report;
-  if (typeof reportText !== "string" || reportText.trim().length === 0) {
+  const report = (backendPayload as { report?: unknown })?.report;
+
+  if (!report || typeof report !== "object" || Array.isArray(report)) {
     return errorResponse(
       502,
       "RESEARCH_FAILED",
-      "The research backend returned no report content."
+      "The research backend returned an invalid report."
     );
   }
 
-  // TEMPORARY SHAPE ADAPTER: the Python backend currently returns one
-  // unstructured string. Until it returns structured JSON, the full text
-  // is placed in executiveSummary and the section fields are left empty
-  // so the existing ResearchReport contract and frontend keep working.
-  const report: ResearchReport = {
-    orgName: name,
-    website: site,
-    generatedAt: new Date().toISOString(),
-    executiveSummary: reportText.trim(),
-    mission: "",
-    programs: [],
-    leadership: [],
-    financialSnapshot: [],
-    existingFunders: [],
-    grantFits: [],
-    introCallQuestions: [],
-    verificationNotes: [
-      {
-        confidence: "low",
-        note: "This report arrived as unstructured text from the research backend. Section-level breakdown and confidence grading are unavailable until the backend returns structured output.",
-      },
-    ],
-  };
-  return NextResponse.json(report);
+  return NextResponse.json(report as ResearchReport);
 }
