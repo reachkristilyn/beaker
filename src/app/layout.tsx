@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/opengraph-image.png",
+        url: "/beaker-share-v1.png",
         width: 1200,
         height: 630,
         alt: "Beaker",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Beaker",
     description: "Beaker is an AI experimentation and research platform.",
-    images: ["/opengraph-image.png"],
+    images: ["/beaker-share-v1.png"],
   },
 };
 
