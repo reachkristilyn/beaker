@@ -17,15 +17,31 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://beakerresearch.org"),
+  metadataBase: new URL("https://www.beakerresearch.org"),
   title: "Beaker",
-  description:
-    "Beaker is an AI experimentation and research platform.",
+  description: "Beaker is an AI experimentation and research platform.",
+
   openGraph: {
     title: "Beaker",
-    description:
-      "Beaker is an AI experimentation and research platform.",
+    description: "Beaker is an AI experimentation and research platform.",
+    url: "https://www.beakerresearch.org",
+    siteName: "Beaker",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Beaker",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Beaker",
+    description: "Beaker is an AI experimentation and research platform.",
+    images: ["/opengraph-image.png"],
   },
 };
 
