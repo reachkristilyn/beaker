@@ -1,13 +1,14 @@
+from datetime import datetime, timezone
+
+from agents import Runner
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-from agents import Runner
 
-from backend.beaker_agents.grant_agents import grant_match_agent
+from backend.beaker_agents.research_agent import organization_research_agent
 
-from dotenv import load_dotenv
 
 load_dotenv()
-
 
 app = FastAPI()
 
@@ -25,11 +26,21 @@ def health_check():
 @app.post("/research")
 def research(request: ResearchRequest):
     prompt = (
-        f"Research {request.org_name}. "
-        f"Website: {request.website or 'Not provided'}. "
-        "Find currently available or clearly upcoming grant opportunities."
+        f"Research the nonprofit organization {request.org_name}. "
+        f"Official website: {request.website or 'Not provided'}. "
+        "Prepare a complete organization briefing using the required structured format."
     )
 
-    result = Runner.run_sync(grant_match_agent, prompt)
+    result = Runner.run_sync(organization_research_agent, prompt)
+    findings = result.final_output
 
-    return {"report": result.final_output}
+    report = {
+        "orgName": request.org_name,
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        **findings.model_dump(),
+    }
+
+    if request.website:
+        report["website"] = request.website
+
+    return {"report": report}
