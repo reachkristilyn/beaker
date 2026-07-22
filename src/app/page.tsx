@@ -1,9 +1,9 @@
 import styles from "./landing.module.css";
 
 const tools = [
-  { href: "/research", name: "Grant Research", tag: "Tool 01" },
-  { href: "/wall-designer", name: "Wall Designer", tag: "Tool 02" },
-  { href: "/splats", name: "Robotics Lab", tag: "Tool 03" },
+  { href: "/research", name: "Grant Research Lab", tag: "01" },
+  { href: "/wall-designer", name: "Event Design Lab", tag: "02" },
+  { href: "/splats", name: "Robotics Lab", tag: "03" },
 ];
 
 export default function Home() {
