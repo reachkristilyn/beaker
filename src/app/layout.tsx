@@ -69,8 +69,6 @@ export default function RootLayout({
             <a href="/wall-designer">Event Design Lab · 02</a>
             {" · "}
             <a href="/splats">Robotics Lab · 03</a> 
-            {" · "}
-            <a href="/splats">Fantasy Football Lab · 04</a> 
           </nav>
         </header>
         {children}
