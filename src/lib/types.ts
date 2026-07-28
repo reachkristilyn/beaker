@@ -23,9 +23,20 @@ export interface FinancialLine {
   note?: string;
 }
 
-export interface GrantFit {
+export interface FederalGrant {
+  grantName: string;
+  agency: string;
+  number: string | null;
+  deadline: string | null; // ISO "YYYY-MM-DD", or null if none listed
+  award: string | null;
+  sourceUrl: string;
+}
+
+export interface WebGrant {
+  grantName: string;
   funder: string;
-  program?: string;
+  deadlineText: string | null; // raw text from the page — not a parsed date
+  sourceUrl: string;
   rationale: string;
 }
 
@@ -47,7 +58,8 @@ export interface ResearchReport {
   leadership: LeadershipEntry[];
   financialSnapshot: FinancialLine[];
   existingFunders: string[];
-  grantFits: GrantFit[];
+  federalGrants: FederalGrant[];
+  webGrants: WebGrant[];
   introCallQuestions: string[];
   verificationNotes: VerificationNote[];
 }

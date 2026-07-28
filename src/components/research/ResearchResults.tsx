@@ -11,6 +11,14 @@ const confidenceLabel: Record<Confidence, string> = {
   low: "Low confidence",
 };
 
+function formatDeadline(iso: string) {
+  // iso is "YYYY-MM-DD"; the "T00:00:00" forces local time so the date
+  // doesn't display a day early in US timezones.
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
+    dateStyle: "medium",
+  });
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h3 className={styles.sectionLabel}>{children}</h3>;
 }
@@ -101,17 +109,52 @@ export default function ResearchResults({ report }: ResearchResultsProps) {
         </section>
       )}
 
-      {report.grantFits.length > 0 && (
+{report.federalGrants.length > 0 && (
         <section className={styles.section}>
-          <SectionLabel>Potential grant fits</SectionLabel>
+          <SectionLabel>Federal grants · Grants.gov</SectionLabel>
           <ul className={styles.plainList}>
-            {report.grantFits.map((fit) => (
-              <li key={fit.funder} className={styles.fit}>
+            {report.federalGrants.map((grant) => (
+              <li key={grant.sourceUrl} className={styles.fit}>
                 <span className={styles.fitFunder}>
-                  {fit.funder}
-                  {fit.program && <span className={styles.fitProgram}> · {fit.program}</span>}
+                  <a href={grant.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {grant.grantName}
+                  </a>
                 </span>
-                <span className={styles.fitRationale}>{fit.rationale}</span>
+                <span className={styles.fitMeta}>
+                  {grant.agency}
+                  {grant.deadline
+                    ? ` · Deadline ${formatDeadline(grant.deadline)}`
+                    : " · No deadline listed"}
+                  {grant.number && ` · ${grant.number}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {report.webGrants.length > 0 && (
+        <section className={styles.section}>
+          <SectionLabel>Other grants · web-sourced</SectionLabel>
+          <p className={styles.disclaimer}>
+            Found via web search and not independently verified. Confirm each
+            deadline and eligibility at the source before relying on it.
+          </p>
+          <ul className={styles.plainList}>
+            {report.webGrants.map((grant, i) => (
+              <li key={`${grant.sourceUrl}-${i}`} className={styles.fit}>
+                <span className={styles.fitFunder}>
+                  <a href={grant.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {grant.grantName}
+                  </a>
+                  <span className={styles.fitProgram}> · {grant.funder}</span>
+                </span>
+                <span className={styles.fitRationale}>{grant.rationale}</span>
+                <span className={styles.fitMeta}>
+                  {grant.deadlineText
+                    ? `Deadline (as listed): ${grant.deadlineText}`
+                    : "Deadline not stated — verify at source"}
+                </span>
               </li>
             ))}
           </ul>

@@ -179,4 +179,19 @@
     grid-template-columns: 1fr;
     gap: 6px;
   }
+
+  .disclaimer {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  
+  .fitMeta {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+
 }

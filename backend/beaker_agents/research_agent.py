@@ -16,11 +16,23 @@ class FinancialLine(BaseModel):
     note: str | None
 
 
-class GrantFit(BaseModel):
-    funder: str
-    program: str | None
-    rationale: str
+class FederalGrant(BaseModel):
+    # Built in app.py from the Grants.gov API — NOT written by the agent.
+    grantName: str
+    agency: str
+    number: str | None
+    deadline: str | None      # ISO date from Grants.gov; past-deadline ones dropped in code
+    award: str | None         # None for now — search2 doesn't return an amount
+    sourceUrl: str
 
+
+class WebGrant(BaseModel):
+    # Written by the agent from web search — foundations, state/local, corporate, RFPs.
+    grantName: str
+    funder: str
+    deadlineText: str | None  # EXACTLY as written on the page ("Rolling", "March 2026") — never parsed
+    sourceUrl: str            # required — no link means the grant is omitted
+    rationale: str
 
 class VerificationNote(BaseModel):
     confidence: Literal["high", "medium", "low"]
@@ -34,7 +46,8 @@ class ResearchFindings(BaseModel):
     leadership: list[LeadershipEntry]
     financialSnapshot: list[FinancialLine]
     existingFunders: list[str]
-    grantFits: list[GrantFit]
+    webGrants: list[WebGrant]
+    grantSearchKeywords: list[str]
     introCallQuestions: list[str]
     verificationNotes: list[VerificationNote]
 
@@ -63,14 +76,24 @@ organization_research_agent = Agent(
     - Include financial figures only when supported by reliable sources,
       and identify the year.
     - List only confirmed existing funders.
-    - Suggest potential grant fits based on mission, population served,
-      geography, and program model.
-    - Do not present suggested grant fits as currently open opportunities
-      unless that status has been verified.
+    - Use web search to find NON-FEDERAL grant opportunities: private and
+      community foundations, corporate giving, and state or local programs.
+      Do NOT list federal or Grants.gov opportunities here — those are pulled
+      from a separate source.
+    - Only include a web grant if you found a specific opportunity with a
+      working source URL. No source link means do not include it.
+    - Report the deadline exactly as written on the source page. Never convert,
+      infer, or guess it. If no deadline is stated, leave it null.
+    - For each, write a short rationale for why it fits this organization.
     - Provide thoughtful questions for an introductory call.
     - Add verification notes for missing, conflicting, old, or uncertain facts.
     - Never invent names, programs, financial figures, funders, or dates.
     - Use empty lists when reliable information cannot be found.
+    - Also produce 2 to 4 short keyword phrases (1-3 words each) suited to
+      searching a FEDERAL grants database for opportunities matching this
+      organization — e.g. "reentry", "workforce development", "youth mentoring".
+      Base them on the mission, population served, and programs. These are
+      search terms, not grant names.
     """,
     tools=[WebSearchTool()],
     output_type=ResearchFindings,
