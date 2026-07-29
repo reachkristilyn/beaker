@@ -1,174 +1,239 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PlacedPanel, Rotation } from "@/types/wallDesigner";
-import { wallProducts, PANEL_SIZE_INCHES } from "@/data/wallProducts";
+import { Grid, PlacedPanel, Rotation, WallProduct } from "@/types/wallDesigner";
+import { wallProducts } from "@/data/wallProducts";
 import WallGrid from "./WallGrid";
 
-const ROTATIONS: Rotation[] = [0, 90, 180, 270];
+// ▸ SET THIS to your actual 2026 backdrop filename in /public/venues/
+const VENUE_IMAGE = "/venues/ziegfeld.png";
 
-function nextRotation(r: Rotation): Rotation {
-  return ROTATIONS[(ROTATIONS.indexOf(r) + 1) % ROTATIONS.length];
-}
+const ROTATIONS: Rotation[] = [0, 90, 180, 270];
+const nextRotation = (r: Rotation): Rotation =>
+  ROTATIONS[(ROTATIONS.indexOf(r) + 1) % ROTATIONS.length];
+
+// Products keyed by id, so WallGrid can look up per-panel.
+const productMap: Record<string, WallProduct> = Object.fromEntries(
+  wallProducts.map((p) => [p.id, p])
+);
+
+// Two starter blocks placed edge-to-edge on the lattice to prove snapping.
+// grid-a spans lattice cols 4–6; grid-b starts at col 7, so they touch.
+// Replace these once "Add Grid" (Phase 2) exists.
+const INITIAL_GRIDS: Grid[] = [
+  { id: "grid-a", col: 4, row: 6, columns: 3, rows: 3, layerOrder: 1, panels: [] },
+  { id: "grid-b", col: 7, row: 6, columns: 2, rows: 3, layerOrder: 2, panels: [] },
+];
 
 export default function WallDesigner() {
-  const [widthFt, setWidthFt] = useState("10");
-  const [heightFt, setHeightFt] = useState("8");
-  const [panels, setPanels] = useState<PlacedPanel[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  
-    const wallRef = useRef<HTMLDivElement>(null);
-    const [wallWidthPx, setWallWidthPx] = useState(500);
-  
-    useEffect(() => {
-      function measure() {
-        if (wallRef.current) setWallWidthPx(wallRef.current.offsetWidth);
-      }
-      measure();
-      window.addEventListener("resize", measure);
-      return () => window.removeEventListener("resize", measure);
-    }, []);
-  
-  const product = wallProducts[0];
+  // ONE global scale: a 22.5" square as a fraction of the image width.
+  const [cellSizePct, setCellSizePct] = useState(0.06);
+  const [grids, setGrids] = useState<Grid[]>(INITIAL_GRIDS);
+  const [selectedGridId, setSelectedGridId] = useState<string | null>("grid-a");
+  const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
+  const activeProductId = wallProducts[0]?.id ?? "";
 
-  const widthIn = (parseFloat(widthFt) || 0) * 12;
-  const heightIn = (parseFloat(heightFt) || 0) * 12;
-  const columns = Math.max(0, Math.floor(widthIn / PANEL_SIZE_INCHES));
-  const rows = Math.max(0, Math.floor(heightIn / PANEL_SIZE_INCHES));
+  // Measure the rendered image width so px sizes stay proportional on resize.
+  const imageRef = useRef<HTMLDivElement>(null);
+  const [imageWidthPx, setImageWidthPx] = useState(0);
 
-  const cellSize = columns > 0 ? wallWidthPx / columns : 0;
+  useEffect(() => {
+    const el = imageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setImageWidthPx(el.offsetWidth));
+    ro.observe(el);
+    setImageWidthPx(el.offsetWidth);
+    return () => ro.disconnect();
+  }, []);
 
-  const visiblePanels = useMemo(
-    () => panels.filter(p => p.row < rows && p.column < columns),
-    [panels, rows, columns]
-  );
+  const cellSizePx = cellSizePct * imageWidthPx;
+  const selectedGrid = grids.find((g) => g.id === selectedGridId) ?? null;
 
-  const selectedPanel = visiblePanels.find(p => p.id === selectedId) ?? null;
+  // Resolve the selected panel (and its grid) from the flat id.
+  const selected = useMemo(() => {
+    if (!selectedPanelId) return null;
+    for (const g of grids) {
+      const p = g.panels.find((pp) => pp.id === selectedPanelId);
+      if (p) return { grid: g, panel: p };
+    }
+    return null;
+  }, [grids, selectedPanelId]);
 
-  function placePanel(row: number, column: number) {
-    const panel: PlacedPanel = {
-      id: crypto.randomUUID(),
-      productId: product.id,
-      row,
-      column,
-      rotation: 0,
-    };
-    setPanels(prev => [...prev, panel]);
-    setSelectedId(panel.id);
+  function placePanel(gridId: string, cellRow: number, cellCol: number) {
+    if (!activeProductId) return;
+    setGrids((prev) =>
+      prev.map((g) => {
+        if (g.id !== gridId) return g;
+        if (g.panels.some((p) => p.cellRow === cellRow && p.cellCol === cellCol)) return g;
+        const panel: PlacedPanel = {
+          id: crypto.randomUUID(),
+          productId: activeProductId,
+          cellRow,
+          cellCol,
+          rotation: 0,
+        };
+        return { ...g, panels: [...g.panels, panel] };
+      })
+    );
+    setSelectedGridId(gridId);
+  }
+
+  function selectPanel(gridId: string, panelId: string) {
+    setSelectedGridId(gridId);
+    setSelectedPanelId(panelId);
+  }
+
+  function selectGrid(gridId: string) {
+    setSelectedGridId(gridId);
+    setSelectedPanelId(null); // switching blocks clears the panel selection
   }
 
   function rotateSelected() {
-    if (!selectedPanel) return;
-    setPanels(prev =>
-      prev.map(p =>
-        p.id === selectedPanel.id ? { ...p, rotation: nextRotation(p.rotation) } : p
+    if (!selected) return;
+    setGrids((prev) =>
+      prev.map((g) =>
+        g.id !== selected.grid.id
+          ? g
+          : {
+              ...g,
+              panels: g.panels.map((p) =>
+                p.id === selected.panel.id ? { ...p, rotation: nextRotation(p.rotation) } : p
+              ),
+            }
       )
     );
   }
 
-  function deleteSelected() {
-    if (!selectedPanel) return;
-    setPanels(prev => prev.filter(p => p.id !== selectedPanel.id));
-    setSelectedId(null);
+  function deleteSelectedPanel() {
+    if (!selected) return;
+    setGrids((prev) =>
+      prev.map((g) =>
+        g.id !== selected.grid.id
+          ? g
+          : { ...g, panels: g.panels.filter((p) => p.id !== selected.panel.id) }
+      )
+    );
+    setSelectedPanelId(null);
   }
 
+  // Column/row steppers act on the selected grid; grid grows from its corner.
+  function resizeSelectedGrid(deltaCols: number, deltaRows: number) {
+    if (!selectedGrid) return;
+    setGrids((prev) =>
+      prev.map((g) => {
+        if (g.id !== selectedGrid.id) return g;
+        const columns = Math.max(1, g.columns + deltaCols);
+        const rows = Math.max(1, g.rows + deltaRows);
+        return {
+          ...g,
+          columns,
+          rows,
+          // Drop panels that now fall outside the shrunk block.
+          panels: g.panels.filter((p) => p.cellCol < columns && p.cellRow < rows),
+        };
+      })
+    );
+  }
+
+  // Keyboard: R rotates the selected panel.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key.toLowerCase() === "r") {
-        const target = e.target as HTMLElement;
-        if (target.tagName === "INPUT") return;
+        const t = e.target as HTMLElement;
+        if (t.tagName === "INPUT") return;
         rotateSelected();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPanel?.id, selectedPanel?.rotation]);
-
-  const tiledWidthIn = columns * PANEL_SIZE_INCHES;
-  const tiledHeightIn = rows * PANEL_SIZE_INCHES;
+  }, [selected?.panel.id, selected?.panel.rotation]);
 
   return (
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16 }}>
-        <label className="flex flex-col text-sm font-medium">
-          Wall width (ft)
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Controls */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 20 }}>
+        <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
+          Square size ({(cellSizePct * 100).toFixed(1)}% of image)
           <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={widthFt}
-            onChange={e => setWidthFt(e.target.value)}
-            className="mt-1 w-32 rounded border border-gray-300 px-3 py-2"
+            type="range"
+            min={0.03}
+            max={0.15}
+            step={0.005}
+            value={cellSizePct}
+            onChange={(e) => setCellSizePct(parseFloat(e.target.value))}
+            style={{ width: 220 }}
           />
         </label>
-        <label className="flex flex-col text-sm font-medium">
-          Wall height (ft)
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={heightFt}
-            onChange={e => setHeightFt(e.target.value)}
-            className="mt-1 w-32 rounded border border-gray-300 px-3 py-2"
-          />
-        </label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={rotateSelected}
-            disabled={!selectedPanel}
-            className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-40"
-          >
-            Rotate (R)
-          </button>
-          <button
-            type="button"
-            onClick={deleteSelected}
-            disabled={!selectedPanel}
-            className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-40"
-          >
-            Delete
-          </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>
+            Grid {selectedGrid ? `${selectedGrid.columns}×${selectedGrid.rows}` : "—"}
+          </span>
+          <button type="button" onClick={() => resizeSelectedGrid(-1, 0)} disabled={!selectedGrid}>– col</button>
+          <button type="button" onClick={() => resizeSelectedGrid(1, 0)} disabled={!selectedGrid}>+ col</button>
+          <button type="button" onClick={() => resizeSelectedGrid(0, -1)} disabled={!selectedGrid}>– row</button>
+          <button type="button" onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" onClick={rotateSelected} disabled={!selected}>Rotate (R)</button>
+          <button type="button" onClick={deleteSelectedPanel} disabled={!selected}>Delete panel</button>
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm sm:grid-cols-3">
-        <div><dt className="inline font-semibold">Requested: </dt><dd className="inline">{widthFt || 0}′ × {heightFt || 0}′</dd></div>
-        <div><dt className="inline font-semibold">Tiled: </dt><dd className="inline">{tiledWidthIn}″ × {tiledHeightIn}″</dd></div>
-        <div><dt className="inline font-semibold">Rows: </dt><dd className="inline">{rows}</dd></div>
-        <div><dt className="inline font-semibold">Columns: </dt><dd className="inline">{columns}</dd></div>
-        <div><dt className="inline font-semibold">Panels placed: </dt><dd className="inline">{visiblePanels.length}</dd></div>
-      </dl>
+      {/* Grid selector — needed because empty blocks have no panel to click */}
+      <div style={{ display: "flex", gap: 8, fontSize: 13 }}>
+        {grids.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => selectGrid(g.id)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: g.id === selectedGridId ? "2px solid #9B6FD4" : "1px solid #ccc",
+              background: g.id === selectedGridId ? "#efe9fb" : "#fff",
+              cursor: "pointer",
+            }}
+          >
+            {g.id}
+          </button>
+        ))}
+      </div>
 
-      <div style={{ position: "relative", width: "100%", maxWidth: 900, margin: "0 auto" }}>
+      {/* Venue backdrop + lattice overlay */}
+      <div ref={imageRef} style={{ position: "relative", width: "100%", maxWidth: 1000, margin: "0 auto" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/venues/ziegfeld.png"
-          alt="Ziegfeld venue stage render"
-          style={{ width: "100%", display: "block" }}
-          draggable={false}
-        />
-        <div
-         ref={wallRef}
-          style={{
-            position: "absolute",
-            left: "31%",
-            top: "55%",
-            width: "38%",
-          }}
-        >
-          <WallGrid
-            rows={rows}
-            columns={columns}
-            cellSize={cellSize}
-            panels={visiblePanels}
-            product={product}
-            selectedId={selectedId}
-            onPlace={placePanel}
-            onSelect={setSelectedId}
-          />
-        </div>
+        <img src={VENUE_IMAGE} alt="Venue backdrop" style={{ width: "100%", display: "block" }} draggable={false} />
+
+        {imageWidthPx > 0 &&
+          [...grids]
+            .sort((a, b) => a.layerOrder - b.layerOrder)
+            .map((g) => (
+              <div
+                key={g.id}
+                style={{
+                  position: "absolute",
+                  left: g.col * cellSizePx,
+                  top: g.row * cellSizePx,
+                  zIndex: g.layerOrder,
+                  outline: g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none",
+                }}
+              >
+                <WallGrid
+                  gridId={g.id}
+                  rows={g.rows}
+                  columns={g.columns}
+                  cellSize={cellSizePx}
+                  panels={g.panels}
+                  products={productMap}
+                  selectedId={selectedPanelId}
+                  onPlace={placePanel}
+                  onSelect={selectPanel}
+                />
+              </div>
+            ))}
       </div>
     </div>
   );
