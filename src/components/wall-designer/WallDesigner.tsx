@@ -27,7 +27,7 @@ const INITIAL_GRIDS: Grid[] = [
 
 export default function WallDesigner() {
   // ONE global scale: a 22.5" square as a fraction of the image width.
-  const [cellSizePct, setCellSizePct] = useState(0.06);
+  const [cellSizePct, setCellSizePct] = useState(0.04);
   const [grids, setGrids] = useState<Grid[]>(INITIAL_GRIDS);
   const [selectedGridId, setSelectedGridId] = useState<string | null>("grid-a");
   const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
@@ -135,6 +135,67 @@ export default function WallDesigner() {
     );
   }
 
+// ── Drag-to-move (snaps to the shared lattice on drop) ──
+const dragRef = useRef<{
+  gridId: string;
+  startX: number;
+  startY: number;
+  startCol: number;
+  startRow: number;
+} | null>(null);
+const [dragOffset, setDragOffset] = useState<{ dx: number; dy: number } | null>(null);
+
+function onGridPointerDown(e: React.PointerEvent, grid: Grid) {
+  // Ignore clicks on cells (place/select happen there) — only drag from the
+  // block's own padding/frame. We detect that by checking the target is the
+  // wrapper itself, not a child button.
+  if (e.target !== e.currentTarget) return;
+  e.preventDefault();
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  selectGrid(grid.id);
+  dragRef.current = {
+    gridId: grid.id,
+    startX: e.clientX,
+    startY: e.clientY,
+    startCol: grid.col,
+    startRow: grid.row,
+  };
+  setDragOffset({ dx: 0, dy: 0 });
+}
+
+function onGridPointerMove(e: React.PointerEvent) {
+  if (!dragRef.current) return;
+  setDragOffset({
+    dx: e.clientX - dragRef.current.startX,
+    dy: e.clientY - dragRef.current.startY,
+  });
+}
+
+function onGridPointerUp() {
+  const drag = dragRef.current;
+  const offset = dragOffset;
+  dragRef.current = null;
+  setDragOffset(null);
+  if (!drag || !offset || cellSizePx === 0) return;
+
+  // Convert the pixel drag into whole-square lattice deltas (snap).
+  const deltaCol = Math.round(offset.dx / cellSizePx);
+  const deltaRow = Math.round(offset.dy / cellSizePx);
+  if (deltaCol === 0 && deltaRow === 0) return;
+
+  setGrids((prev) =>
+    prev.map((g) =>
+      g.id !== drag.gridId
+        ? g
+        : {
+            ...g,
+            col: Math.max(0, drag.startCol + deltaCol),
+            row: Math.max(0, drag.startRow + deltaRow),
+          }
+    )
+  );
+}
+
   // Keyboard: R rotates the selected panel.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -213,12 +274,25 @@ export default function WallDesigner() {
             .map((g) => (
               <div
                 key={g.id}
+                onPointerDown={(e) => onGridPointerDown(e, g)}
+                onPointerMove={onGridPointerMove}
+                onPointerUp={onGridPointerUp}
                 style={{
                   position: "absolute",
-                  left: g.col * cellSizePx,
-                  top: g.row * cellSizePx,
-                  zIndex: g.layerOrder,
-                  outline: g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none",
+                  left:
+                    g.col * cellSizePx +
+                    (dragOffset && dragRef.current?.gridId === g.id ? dragOffset.dx : 0),
+                  top:
+                    g.row * cellSizePx +
+                    (dragOffset && dragRef.current?.gridId === g.id ? dragOffset.dy : 0),
+                  zIndex:
+                    dragRef.current?.gridId === g.id ? 999 : g.layerOrder,
+                  padding: 6,
+                  cursor: dragRef.current?.gridId === g.id ? "grabbing" : "grab",
+                  outline:
+                    g.id === selectedGridId
+                      ? "2px solid rgba(155,111,212,0.9)"
+                      : "none",
                 }}
               >
                 <WallGrid
