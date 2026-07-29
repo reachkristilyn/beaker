@@ -15,7 +15,7 @@ export default function ProductPanel({ panel, product, selected, size, onSelect 
     <button
       type="button"
       onClick={() => onSelect(panel.id)}
-      aria-label={`${product.name} panel, row ${panel.row + 1}, column ${panel.column + 1}, rotated ${panel.rotation} degrees${selected ? ", selected" : ""}`}
+      aria-label={`${product.name} panel, row ${panel.cellRow + 1}, column ${panel.cellCol + 1}, rotated ${panel.rotation} degrees${selected ? ", selected" : ""}`}
       style={{
         width: size,
         height: size,
