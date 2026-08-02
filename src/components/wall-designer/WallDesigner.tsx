@@ -31,6 +31,7 @@ export default function WallDesigner() {
   const [grids, setGrids] = useState<Grid[]>(() => [makeStarterGrid()]);
   const [selectedGridId, setSelectedGridId] = useState<string | null>(null);
   const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
   const activeProductId = wallProducts[0]?.id ?? "";
 
   const imageRef = useRef<HTMLDivElement>(null);
@@ -287,6 +288,13 @@ export default function WallDesigner() {
         <button type="button" style={btn} onClick={deleteSelectedPanel} disabled={!selected}>Delete panel</button>
         <span style={{ width: 12 }} />
         <button type="button" style={{ ...btn, borderColor: "#9B6FD4", color: "#7c4dd0" }} onClick={startOver}>Start over (one wall)</button>
+        <button
+          type="button"
+          style={{ ...btn, borderColor: "#9B6FD4", color: previewMode ? "#fff" : "#7c4dd0", background: previewMode ? "#7c4dd0" : "#fff" }}
+          onClick={() => { setPreviewMode((v) => !v); setSelectedGridId(null); setSelectedPanelId(null); }}
+        >
+          {previewMode ? "Edit mode" : "Preview"}
+        </button>
       </div>
 
       {/* Venue + free-placed blocks */}
@@ -298,6 +306,7 @@ export default function WallDesigner() {
           [...grids].sort((a, b) => a.layerOrder - b.layerOrder).map((g) => (
             <div key={g.id} style={{ position: "absolute", left: g.xPct * imageWidthPx, top: g.yPct * imageWidthPx, zIndex: g.layerOrder }}>
               {/* Drag handle — grab THIS to move; click cells to place panels */}
+                                {!previewMode && g.id === selectedGridId && (
               <div
                 onPointerDown={(e) => onHandleDown(e, g)}
                 onPointerMove={onHandleMove}
@@ -324,9 +333,8 @@ export default function WallDesigner() {
               >
                 ⠿ move
               </div>
-
-              <div style={{ outline: g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none" }}>
-                <WallGrid
+              )}
+            <div style={{ outline: !previewMode && g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none" }}>                <WallGrid
                   gridId={g.id}
                   rows={g.rows}
                   columns={g.columns}
