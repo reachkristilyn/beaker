@@ -32,7 +32,7 @@ export default function WallDesigner() {
   const [selectedGridId, setSelectedGridId] = useState<string | null>(null);
   const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const activeProductId = wallProducts[0]?.id ?? "";
+  const [activeProductId, setActiveProductId] = useState<string>(wallProducts[0]?.id ?? "");
 
   const imageRef = useRef<HTMLDivElement>(null);
   const [imageWidthPx, setImageWidthPx] = useState(0);
@@ -265,6 +265,20 @@ export default function WallDesigner() {
           <input type="range" min={0.03} max={0.15} step={0.005} value={cellSizePct}
             onChange={(e) => setCellSizePct(parseFloat(e.target.value))} style={{ width: 200 }} />
         </label>
+
+<label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
+          Product
+          <select
+            value={activeProductId}
+            onChange={(e) => setActiveProductId(e.target.value)}
+            style={{ marginTop: 4, padding: "6px 8px", borderRadius: 6, border: "1px solid #ccc" }}
+          >
+            {wallProducts.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </label>
+        
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 500 }}>
             Grid {selectedGrid ? `${selectedGrid.columns}×${selectedGrid.rows}` : "—"}
@@ -307,6 +321,7 @@ export default function WallDesigner() {
             <div key={g.id} style={{ position: "absolute", left: g.xPct * imageWidthPx, top: g.yPct * imageWidthPx, zIndex: g.layerOrder }}>
               {/* Drag handle — grab THIS to move; click cells to place panels */}
                                 {!previewMode && g.id === selectedGridId && (
+
               <div
                 onPointerDown={(e) => onHandleDown(e, g)}
                 onPointerMove={onHandleMove}

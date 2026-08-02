@@ -9,4 +9,10 @@ export const wallProducts: WallProduct[] = [
     image: "/products/dune.png",
     panelSizeInches: PANEL_SIZE_INCHES,
   },
+  {
+    id: "orbit",
+    name: "Orbit",
+    image: "/products/orbit.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+  },
 ];
