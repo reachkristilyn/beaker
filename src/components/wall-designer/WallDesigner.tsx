@@ -5,35 +5,34 @@ import { Grid, PlacedPanel, Rotation, WallProduct } from "@/types/wallDesigner";
 import { wallProducts } from "@/data/wallProducts";
 import WallGrid from "./WallGrid";
 
-// ▸ SET THIS to your actual 2026 backdrop filename in /public/venues/
 const VENUE_IMAGE = "/venues/ziegfeld.png";
 
 const ROTATIONS: Rotation[] = [0, 90, 180, 270];
 const nextRotation = (r: Rotation): Rotation =>
   ROTATIONS[(ROTATIONS.indexOf(r) + 1) % ROTATIONS.length];
 
-// Products keyed by id, so WallGrid can look up per-panel.
 const productMap: Record<string, WallProduct> = Object.fromEntries(
   wallProducts.map((p) => [p.id, p])
 );
 
-// Two starter blocks placed edge-to-edge on the lattice to prove snapping.
-// grid-a spans lattice cols 4–6; grid-b starts at col 7, so they touch.
-// Replace these once "Add Grid" (Phase 2) exists.
-const INITIAL_GRIDS: Grid[] = [
-  { id: "grid-a", col: 4, row: 6, columns: 3, rows: 3, layerOrder: 1, panels: [] },
-  { id: "grid-b", col: 7, row: 6, columns: 2, rows: 3, layerOrder: 2, panels: [] },
-];
+// Start with one wall near center; the "Start over" button recreates this.
+const makeStarterGrid = (): Grid => ({
+  id: crypto.randomUUID(),
+  xPct: 0.33,
+  yPct: 0.34,
+  columns: 3,
+  rows: 3,
+  layerOrder: 1,
+  panels: [],
+});
 
 export default function WallDesigner() {
-  // ONE global scale: a 22.5" square as a fraction of the image width.
   const [cellSizePct, setCellSizePct] = useState(0.04);
-  const [grids, setGrids] = useState<Grid[]>(INITIAL_GRIDS);
-  const [selectedGridId, setSelectedGridId] = useState<string | null>("grid-a");
+  const [grids, setGrids] = useState<Grid[]>(() => [makeStarterGrid()]);
+  const [selectedGridId, setSelectedGridId] = useState<string | null>(null);
   const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
   const activeProductId = wallProducts[0]?.id ?? "";
 
-  // Measure the rendered image width so px sizes stay proportional on resize.
   const imageRef = useRef<HTMLDivElement>(null);
   const [imageWidthPx, setImageWidthPx] = useState(0);
 
@@ -48,8 +47,8 @@ export default function WallDesigner() {
 
   const cellSizePx = cellSizePct * imageWidthPx;
   const selectedGrid = grids.find((g) => g.id === selectedGridId) ?? null;
+  const maxLayer = () => grids.reduce((m, g) => Math.max(m, g.layerOrder), 0);
 
-  // Resolve the selected panel (and its grid) from the flat id.
   const selected = useMemo(() => {
     if (!selectedPanelId) return null;
     for (const g of grids) {
@@ -59,6 +58,7 @@ export default function WallDesigner() {
     return null;
   }, [grids, selectedPanelId]);
 
+  // ── Panel placement / selection ──
   function placePanel(gridId: string, cellRow: number, cellCol: number) {
     if (!activeProductId) return;
     setGrids((prev) =>
@@ -82,10 +82,9 @@ export default function WallDesigner() {
     setSelectedGridId(gridId);
     setSelectedPanelId(panelId);
   }
-
   function selectGrid(gridId: string) {
     setSelectedGridId(gridId);
-    setSelectedPanelId(null); // switching blocks clears the panel selection
+    setSelectedPanelId(null);
   }
 
   function rotateSelected() {
@@ -103,7 +102,6 @@ export default function WallDesigner() {
       )
     );
   }
-
   function deleteSelectedPanel() {
     if (!selected) return;
     setGrids((prev) =>
@@ -116,7 +114,7 @@ export default function WallDesigner() {
     setSelectedPanelId(null);
   }
 
-  // Column/row steppers act on the selected grid; grid grows from its corner.
+  // ── Grid size (steppers) ──
   function resizeSelectedGrid(deltaCols: number, deltaRows: number) {
     if (!selectedGrid) return;
     setGrids((prev) =>
@@ -128,75 +126,120 @@ export default function WallDesigner() {
           ...g,
           columns,
           rows,
-          // Drop panels that now fall outside the shrunk block.
           panels: g.panels.filter((p) => p.cellCol < columns && p.cellRow < rows),
         };
       })
     );
   }
 
-// ── Drag-to-move (snaps to the shared lattice on drop) ──
-const dragRef = useRef<{
-  gridId: string;
-  startX: number;
-  startY: number;
-  startCol: number;
-  startRow: number;
-} | null>(null);
-const [dragOffset, setDragOffset] = useState<{ dx: number; dy: number } | null>(null);
+  // ── Phase 2: add / duplicate / delete / layer order ──
+  function addGrid() {
+    const g: Grid = {
+      id: crypto.randomUUID(),
+      xPct: 0.02,
+      yPct: 0.02,
+      columns: 2,
+      rows: 2,
+      layerOrder: maxLayer() + 1,
+      panels: [],
+    };
+    setGrids((prev) => [...prev, g]);
+    setSelectedGridId(g.id);
+    setSelectedPanelId(null);
+  }
 
-function onGridPointerDown(e: React.PointerEvent, grid: Grid) {
-  // Ignore clicks on cells (place/select happen there) — only drag from the
-  // block's own padding/frame. We detect that by checking the target is the
-  // wrapper itself, not a child button.
-  if (e.target !== e.currentTarget) return;
-  e.preventDefault();
-  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  selectGrid(grid.id);
-  dragRef.current = {
-    gridId: grid.id,
-    startX: e.clientX,
-    startY: e.clientY,
-    startCol: grid.col,
-    startRow: grid.row,
-  };
-  setDragOffset({ dx: 0, dy: 0 });
-}
+  function duplicateGrid() {
+    if (!selectedGrid) return;
+    const copy: Grid = {
+      ...selectedGrid,
+      id: crypto.randomUUID(),
+      xPct: selectedGrid.xPct + cellSizePct, // offset one square so it's visible
+      yPct: selectedGrid.yPct + cellSizePct,
+      layerOrder: maxLayer() + 1,
+      panels: selectedGrid.panels.map((p) => ({ ...p, id: crypto.randomUUID() })),
+    };
+    setGrids((prev) => [...prev, copy]);
+    setSelectedGridId(copy.id);
+    setSelectedPanelId(null);
+  }
 
-function onGridPointerMove(e: React.PointerEvent) {
-  if (!dragRef.current) return;
-  setDragOffset({
-    dx: e.clientX - dragRef.current.startX,
-    dy: e.clientY - dragRef.current.startY,
-  });
-}
+  function deleteGrid() {
+    if (!selectedGrid) return;
+    setGrids((prev) => prev.filter((g) => g.id !== selectedGrid.id));
+    setSelectedGridId(null);
+    setSelectedPanelId(null);
+  }
 
-function onGridPointerUp() {
-  const drag = dragRef.current;
-  const offset = dragOffset;
-  dragRef.current = null;
-  setDragOffset(null);
-  if (!drag || !offset || cellSizePx === 0) return;
+  function bringForward() {
+    if (!selectedGrid) return;
+    setGrids((prev) => {
+      const sorted = [...prev].sort((a, b) => a.layerOrder - b.layerOrder);
+      const i = sorted.findIndex((g) => g.id === selectedGrid.id);
+      if (i < 0 || i === sorted.length - 1) return prev;
+      const a = sorted[i], b = sorted[i + 1];
+      return prev.map((g) =>
+        g.id === a.id ? { ...g, layerOrder: b.layerOrder }
+        : g.id === b.id ? { ...g, layerOrder: a.layerOrder }
+        : g
+      );
+    });
+  }
+  function sendBackward() {
+    if (!selectedGrid) return;
+    setGrids((prev) => {
+      const sorted = [...prev].sort((a, b) => a.layerOrder - b.layerOrder);
+      const i = sorted.findIndex((g) => g.id === selectedGrid.id);
+      if (i <= 0) return prev;
+      const a = sorted[i], b = sorted[i - 1];
+      return prev.map((g) =>
+        g.id === a.id ? { ...g, layerOrder: b.layerOrder }
+        : g.id === b.id ? { ...g, layerOrder: a.layerOrder }
+        : g
+      );
+    });
+  }
 
-  // Convert the pixel drag into whole-square lattice deltas (snap).
-  const deltaCol = Math.round(offset.dx / cellSizePx);
-  const deltaRow = Math.round(offset.dy / cellSizePx);
-  if (deltaCol === 0 && deltaRow === 0) return;
+  function startOver() {
+    const g = makeStarterGrid();
+    setGrids([g]);
+    setSelectedGridId(g.id);
+    setSelectedPanelId(null);
+  }
 
-  setGrids((prev) =>
-    prev.map((g) =>
-      g.id !== drag.gridId
-        ? g
-        : {
-            ...g,
-            col: Math.max(0, drag.startCol + deltaCol),
-            row: Math.max(0, drag.startRow + deltaRow),
-          }
-    )
-  );
-}
+  // ── Free drag (no snapping) via a dedicated handle ──
+  const dragRef = useRef<{
+    gridId: string; startX: number; startY: number; startXPct: number; startYPct: number;
+  } | null>(null);
 
-  // Keyboard: R rotates the selected panel.
+  function onHandleDown(e: React.PointerEvent, g: Grid) {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    selectGrid(g.id);
+    dragRef.current = {
+      gridId: g.id, startX: e.clientX, startY: e.clientY, startXPct: g.xPct, startYPct: g.yPct,
+    };
+  }
+  function onHandleMove(e: React.PointerEvent) {
+    const d = dragRef.current;
+    if (!d || imageWidthPx === 0) return;
+    const dxPct = (e.clientX - d.startX) / imageWidthPx;
+    const dyPct = (e.clientY - d.startY) / imageWidthPx;
+    setGrids((prev) =>
+      prev.map((g) =>
+        g.id !== d.gridId
+          ? g
+          : { ...g, xPct: Math.max(0, d.startXPct + dxPct), yPct: Math.max(0, d.startYPct + dyPct) }
+      )
+    );
+  }
+  function onHandleUp(e: React.PointerEvent) {
+    if (dragRef.current) {
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    }
+    dragRef.current = null;
+  }
+
+  // Keyboard: R rotates selected panel.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key.toLowerCase() === "r") {
@@ -210,91 +253,79 @@ function onGridPointerUp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.panel.id, selected?.panel.rotation]);
 
+  const btn = { padding: "6px 10px", borderRadius: 6, border: "1px solid #ccc", background: "#fff", cursor: "pointer", fontSize: 13 } as const;
+
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Controls */}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Row 1: square size + grid steppers */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 20 }}>
         <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
           Square size ({(cellSizePct * 100).toFixed(1)}% of image)
-          <input
-            type="range"
-            min={0.03}
-            max={0.15}
-            step={0.005}
-            value={cellSizePct}
-            onChange={(e) => setCellSizePct(parseFloat(e.target.value))}
-            style={{ width: 220 }}
-          />
+          <input type="range" min={0.03} max={0.15} step={0.005} value={cellSizePct}
+            onChange={(e) => setCellSizePct(parseFloat(e.target.value))} style={{ width: 200 }} />
         </label>
-
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 500 }}>
             Grid {selectedGrid ? `${selectedGrid.columns}×${selectedGrid.rows}` : "—"}
           </span>
-          <button type="button" onClick={() => resizeSelectedGrid(-1, 0)} disabled={!selectedGrid}>– col</button>
-          <button type="button" onClick={() => resizeSelectedGrid(1, 0)} disabled={!selectedGrid}>+ col</button>
-          <button type="button" onClick={() => resizeSelectedGrid(0, -1)} disabled={!selectedGrid}>– row</button>
-          <button type="button" onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
-        </div>
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" onClick={rotateSelected} disabled={!selected}>Rotate (R)</button>
-          <button type="button" onClick={deleteSelectedPanel} disabled={!selected}>Delete panel</button>
+          <button type="button" style={btn} onClick={() => resizeSelectedGrid(-1, 0)} disabled={!selectedGrid}>– col</button>
+          <button type="button" style={btn} onClick={() => resizeSelectedGrid(1, 0)} disabled={!selectedGrid}>+ col</button>
+          <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, -1)} disabled={!selectedGrid}>– row</button>
+          <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
         </div>
       </div>
 
-      {/* Grid selector — needed because empty blocks have no panel to click */}
-      <div style={{ display: "flex", gap: 8, fontSize: 13 }}>
-        {grids.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            onClick={() => selectGrid(g.id)}
-            style={{
-              padding: "4px 10px",
-              borderRadius: 6,
-              border: g.id === selectedGridId ? "2px solid #9B6FD4" : "1px solid #ccc",
-              background: g.id === selectedGridId ? "#efe9fb" : "#fff",
-              cursor: "pointer",
-            }}
-          >
-            {g.id}
-          </button>
-        ))}
+      {/* Row 2: grid + panel actions */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <button type="button" style={btn} onClick={addGrid}>+ Add grid</button>
+        <button type="button" style={btn} onClick={duplicateGrid} disabled={!selectedGrid}>Duplicate</button>
+        <button type="button" style={btn} onClick={deleteGrid} disabled={!selectedGrid}>Delete grid</button>
+        <button type="button" style={btn} onClick={bringForward} disabled={!selectedGrid}>Bring forward</button>
+        <button type="button" style={btn} onClick={sendBackward} disabled={!selectedGrid}>Send backward</button>
+        <span style={{ width: 12 }} />
+        <button type="button" style={btn} onClick={rotateSelected} disabled={!selected}>Rotate panel (R)</button>
+        <button type="button" style={btn} onClick={deleteSelectedPanel} disabled={!selected}>Delete panel</button>
+        <span style={{ width: 12 }} />
+        <button type="button" style={{ ...btn, borderColor: "#9B6FD4", color: "#7c4dd0" }} onClick={startOver}>Start over (one wall)</button>
       </div>
 
-      {/* Venue backdrop + lattice overlay */}
+      {/* Venue + free-placed blocks */}
       <div ref={imageRef} style={{ position: "relative", width: "100%", maxWidth: 1000, margin: "0 auto" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={VENUE_IMAGE} alt="Venue backdrop" style={{ width: "100%", display: "block" }} draggable={false} />
 
         {imageWidthPx > 0 &&
-          [...grids]
-            .sort((a, b) => a.layerOrder - b.layerOrder)
-            .map((g) => (
+          [...grids].sort((a, b) => a.layerOrder - b.layerOrder).map((g) => (
+            <div key={g.id} style={{ position: "absolute", left: g.xPct * imageWidthPx, top: g.yPct * imageWidthPx, zIndex: g.layerOrder }}>
+              {/* Drag handle — grab THIS to move; click cells to place panels */}
               <div
-                key={g.id}
-                onPointerDown={(e) => onGridPointerDown(e, g)}
-                onPointerMove={onGridPointerMove}
-                onPointerUp={onGridPointerUp}
+                onPointerDown={(e) => onHandleDown(e, g)}
+                onPointerMove={onHandleMove}
+                onPointerUp={onHandleUp}
+                title="Drag to move"
                 style={{
                   position: "absolute",
-                  left:
-                    g.col * cellSizePx +
-                    (dragOffset && dragRef.current?.gridId === g.id ? dragOffset.dx : 0),
-                  top:
-                    g.row * cellSizePx +
-                    (dragOffset && dragRef.current?.gridId === g.id ? dragOffset.dy : 0),
-                  zIndex:
-                    dragRef.current?.gridId === g.id ? 999 : g.layerOrder,
-                  padding: 6,
+                  top: -22,
+                  left: 0,
+                  height: 18,
+                  padding: "0 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: 12,
+                  lineHeight: 1,
+                  color: "#fff",
+                  background: g.id === selectedGridId ? "#7c4dd0" : "rgba(124,77,208,0.7)",
+                  borderRadius: 5,
                   cursor: dragRef.current?.gridId === g.id ? "grabbing" : "grab",
-                  outline:
-                    g.id === selectedGridId
-                      ? "2px solid rgba(155,111,212,0.9)"
-                      : "none",
+                  userSelect: "none",
+                  touchAction: "none",
+                  whiteSpace: "nowrap",
                 }}
               >
+                ⠿ move
+              </div>
+
+              <div style={{ outline: g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none" }}>
                 <WallGrid
                   gridId={g.id}
                   rows={g.rows}
@@ -307,7 +338,8 @@ function onGridPointerUp() {
                   onSelect={selectPanel}
                 />
               </div>
-            ))}
+            </div>
+          ))}
       </div>
     </div>
   );
