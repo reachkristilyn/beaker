@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Grid, PlacedPanel, Rotation, WallProduct } from "@/types/wallDesigner";
 import { wallProducts } from "@/data/wallProducts";
 import WallGrid from "./WallGrid";
+import { toPng } from "html-to-image";
 
 const VENUE_IMAGE = "/venues/ziegfeld.png";
 
@@ -217,6 +218,32 @@ export default function WallDesigner() {
     a.click();
     URL.revokeObjectURL(url);
   }
+  async function exportImage() {
+    if (!imageRef.current) return;
+
+    const wasPreview = previewMode;
+    // Force preview + clear selection so no chrome is in the shot.
+    setPreviewMode(true);
+    setSelectedGridId(null);
+    setSelectedPanelId(null);
+
+    // Let React paint the preview state before we capture.
+    await new Promise((r) => setTimeout(r, 80));
+
+    try {
+      const dataUrl = await toPng(imageRef.current, { pixelRatio: 2 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `beaker-wall-${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+    } catch (err) {
+      console.error(err);
+      alert("Couldn't export the image — check the console.");
+    } finally {
+      // Restore whatever mode they were in before exporting.
+      setPreviewMode(wasPreview);
+    }
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -348,6 +375,7 @@ export default function WallDesigner() {
         </button>
         <button type="button" style={btn} onClick={saveDesign}>Save design</button>
         <button type="button" style={btn} onClick={() => fileInputRef.current?.click()}>Load design</button>
+        <button type="button" style={{ ...btn, borderColor: "#9B6FD4", color: "#7c4dd0" }} onClick={exportImage}>Export image (PNG)</button>
         <input
           ref={fileInputRef}
           type="file"
