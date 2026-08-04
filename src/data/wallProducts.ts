@@ -15,4 +15,16 @@ export const wallProducts: WallProduct[] = [
     image: "/products/orbit.png",
     panelSizeInches: PANEL_SIZE_INCHES,
   },
+  {
+    id: "swirl",
+    name: "Swirl",
+    image: "/products/swirl.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+  },
+  {
+    id: "swirlangle",
+    name: "Swirl Angle",
+    image: "/products/swirlangle.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+  },
 ];
