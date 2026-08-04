@@ -206,6 +206,43 @@ export default function WallDesigner() {
     setSelectedGridId(g.id);
     setSelectedPanelId(null);
   }
+// ── Save / load design to a .json file ──
+  function saveDesign() {
+    const design = { version: 1, cellSizePct, grids };
+    const blob = new Blob([JSON.stringify(design, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `beaker-wall-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function loadDesign(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string);
+        if (typeof parsed.cellSizePct !== "number" || !Array.isArray(parsed.grids)) {
+          alert("That doesn't look like a Beaker wall design file.");
+          return;
+        }
+        setCellSizePct(parsed.cellSizePct);
+        setGrids(parsed.grids);
+        setSelectedGridId(null);
+        setSelectedPanelId(null);
+      } catch {
+        alert("Couldn't read that file — is it a valid design JSON?");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // reset so loading the same file twice still fires
+  }
+
 
   // ── Free drag (no snapping) via a dedicated handle ──
   const dragRef = useRef<{
@@ -309,6 +346,15 @@ export default function WallDesigner() {
         >
           {previewMode ? "Edit mode" : "Preview"}
         </button>
+        <button type="button" style={btn} onClick={saveDesign}>Save design</button>
+        <button type="button" style={btn} onClick={() => fileInputRef.current?.click()}>Load design</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          onChange={loadDesign}
+          style={{ display: "none" }}
+        />
       </div>
 
       {/* Venue + free-placed blocks */}
