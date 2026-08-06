@@ -24,7 +24,7 @@ export const wallProducts: WallProduct[] = [
   {
     id: "swirlangle",
     name: "Swirl Angle",
-    image: "/products/swirlangle3.png",
+    image: "/products/swirlangle4.png",
     panelSizeInches: PANEL_SIZE_INCHES,
   },
 ];
