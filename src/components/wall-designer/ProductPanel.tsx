@@ -24,6 +24,7 @@ export default function ProductPanel({ panel, product, selected, size, onSelect 
         overflow: "hidden",
         padding: 0,
         border: "none",
+        background: "transparent",
         cursor: "pointer",
         outline: selected ? "3px solid #2563eb" : "none",
         outlineOffset: "-3px",
