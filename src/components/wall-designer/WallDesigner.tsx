@@ -135,6 +135,13 @@ export default function WallDesigner() {
     );
   }
 
+function setSelectedGridAngle(deg: number) {
+    if (!selectedGrid) return;
+    setGrids((prev) =>
+      prev.map((g) => (g.id !== selectedGrid.id ? g : { ...g, angleDeg: deg }))
+    );
+  }  
+
   // ── Phase 2: add / duplicate / delete / layer order ──
   function addGrid() {
     const g: Grid = {
@@ -354,6 +361,23 @@ export default function WallDesigner() {
           <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, -1)} disabled={!selectedGrid}>– row</button>
           <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
         </div>
+        <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
+        </div>
+
+        {/* Angle slider — paste here */}
+        <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
+          Angle ({selectedGrid?.angleDeg ?? 0}°)
+          <input
+            type="range"
+            min={-30}
+            max={30}
+            step={1}
+            value={selectedGrid?.angleDeg ?? 0}
+            onChange={(e) => setSelectedGridAngle(parseInt(e.target.value))}
+            disabled={!selectedGrid}
+            style={{ width: 160 }}
+          />
+        </label>
       </div>
 
       {/* Row 2: grid + panel actions */}
@@ -425,8 +449,11 @@ export default function WallDesigner() {
                 ⠿ move
               </div>
               )}
-            <div style={{ outline: !previewMode && g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none" }}>                <WallGrid
-                  gridId={g.id}
+              <div style={{
+                outline: !previewMode && g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none",
+                transform: g.angleDeg ? `skewX(${g.angleDeg}deg)` : undefined,
+                transformOrigin: "center center",
+              }}>                  gridId={g.id}
                   rows={g.rows}
                   columns={g.columns}
                   cellSize={cellSizePx}
