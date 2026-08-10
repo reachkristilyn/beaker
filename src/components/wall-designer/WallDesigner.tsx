@@ -380,7 +380,7 @@ function setSelectedGridAngle(deg: number) {
         </label>
       </div>
 
-      {/* Row 2: grid + panel actions */}
+      /* Row 2: grid + panel actions */
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         <button type="button" style={btn} onClick={addGrid}>+ Add grid</button>
         <button type="button" style={btn} onClick={duplicateGrid} disabled={!selectedGrid}>Duplicate</button>
