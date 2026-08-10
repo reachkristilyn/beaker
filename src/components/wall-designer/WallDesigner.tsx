@@ -24,6 +24,7 @@ const makeStarterGrid = (): Grid => ({
   columns: 3,
   rows: 3,
   layerOrder: 1,
+  angleDeg: 0,
   panels: [],
 });
 
@@ -207,7 +208,6 @@ export default function WallDesigner() {
     setGrids([g]);
     setSelectedGridId(g.id);
     setSelectedPanelId(null);
-    angleDeg: 0,
   }
 // ── Save / load design to a .json file ──
   function saveDesign() {
