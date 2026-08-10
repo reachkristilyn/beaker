@@ -32,8 +32,8 @@ export default function WallGrid({
   if (rows < 1 || columns < 1) return null;
 
   // Width stays the 22.5" square width; height shrinks/grows by aspect.
-  const cellW = cellSize;
-  const cellH = cellSize / (cellAspect || 1);
+  const cellH = cellSize;
+  const cellW = cellSize / (cellAspect || 1);
 
   const panelAt = (cellRow: number, cellCol: number) =>
     panels.find((p) => p.cellRow === cellRow && p.cellCol === cellCol);
