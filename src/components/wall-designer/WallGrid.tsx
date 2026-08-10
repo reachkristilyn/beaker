@@ -8,8 +8,9 @@ type Props = {
   rows: number;
   columns: number;
   cellSize: number;
+  // Effective aspect (width ÷ height) for THIS grid's cells. 1 = square.
+  cellAspect: number;
   panels: PlacedPanel[];
-  // Per-panel lookup now, since each cell can hold a different product.
   products: Record<string, WallProduct>;
   selectedId: string | null;
   onPlace: (gridId: string, cellRow: number, cellCol: number) => void;
@@ -21,6 +22,7 @@ export default function WallGrid({
   rows,
   columns,
   cellSize,
+  cellAspect,
   panels,
   products,
   selectedId,
@@ -28,6 +30,10 @@ export default function WallGrid({
   onSelect,
 }: Props) {
   if (rows < 1 || columns < 1) return null;
+
+  // Width stays the 22.5" square width; height shrinks/grows by aspect.
+  const cellW = cellSize;
+  const cellH = cellSize / (cellAspect || 1);
 
   const panelAt = (cellRow: number, cellCol: number) =>
     panels.find((p) => p.cellRow === cellRow && p.cellCol === cellCol);
@@ -38,10 +44,9 @@ export default function WallGrid({
       aria-label="Wall panel grid"
       style={{
         display: "grid",
-        gridTemplateColumns: `repeat(${columns}, ${cellSize}px)`,
-        gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-        // No border, no margin: the grid is positioned by its parent on the
-        // lattice and must be transparent so the venue shows through.
+        gridTemplateColumns: `repeat(${columns}, ${cellW}px)`,
+        gridTemplateRows: `repeat(${rows}, ${cellH}px)`,
+        gap: 0, // stacked panels butt together — no gaps
         background: "transparent",
       }}
     >
@@ -57,7 +62,8 @@ export default function WallGrid({
                   panel={placed}
                   product={product}
                   selected={placed.id === selectedId}
-                  size={cellSize}
+                  width={cellW}
+                  height={cellH}
                   onSelect={() => onSelect(gridId, placed.id)}
                 />
               ) : (
@@ -66,8 +72,8 @@ export default function WallGrid({
                   onClick={() => onPlace(gridId, r, c)}
                   aria-label={`Empty cell, row ${r + 1}, column ${c + 1}`}
                   style={{
-                    width: cellSize,
-                    height: cellSize,
+                    width: cellW,
+                    height: cellH,
                     border: "1px dashed rgba(155,111,212,0.5)",
                     background: "transparent",
                     cursor: "pointer",

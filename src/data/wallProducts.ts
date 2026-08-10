@@ -26,5 +26,6 @@ export const wallProducts: WallProduct[] = [
     name: "Swirl Angle",
     image: "/products/swirlangle.png",
     panelSizeInches: PANEL_SIZE_INCHES,
+    aspect: 1.3,   
   },
 ];

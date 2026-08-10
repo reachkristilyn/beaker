@@ -5,6 +5,7 @@ export type WallProduct = {
   name: string;
   image: string;
   panelSizeInches: number;
+  aspect?: number; // width ÷ height of the cell; absent = 1 (square). >1 = wider/shorter.
 };
 
 export type PlacedPanel = {
@@ -27,6 +28,7 @@ export type Grid = {
   rows: number;
   layerOrder: number;
   angleDeg: number; // 2D lean; 0 = head-on, +/- tilts opposite ways
+  cellAspect?: number; // overrides the product's aspect for THIS grid while tuning; absent = use product/default
   panels: PlacedPanel[];
 };
 

@@ -6,19 +6,20 @@ type Props = {
   panel: PlacedPanel;
   product: WallProduct;
   selected: boolean;
-  size: number;
+  width: number;
+  height: number;
   onSelect: (id: string) => void;
 };
 
-export default function ProductPanel({ panel, product, selected, size, onSelect }: Props) {
+export default function ProductPanel({ panel, product, selected, width, height, onSelect }: Props) {
   return (
     <button
       type="button"
       onClick={() => onSelect(panel.id)}
       aria-label={`${product.name} panel, row ${panel.cellRow + 1}, column ${panel.cellCol + 1}, rotated ${panel.rotation} degrees${selected ? ", selected" : ""}`}
       style={{
-        width: size,
-        height: size,
+        width,
+        height,
         display: "block",
         position: "relative",
         overflow: "hidden",
@@ -37,7 +38,7 @@ export default function ProductPanel({ panel, product, selected, size, onSelect 
         style={{
             width: "100%",
             height: "100%",
-            objectFit: "cover",
+            objectFit: "fill",
             display: "block",
             transform: `rotate(${panel.rotation}deg)`,
           }}

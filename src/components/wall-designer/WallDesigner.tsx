@@ -377,6 +377,19 @@ function setSelectedGridAngle(deg: number) {
             style={{ width: 160 }}
           />
         </label>
+        <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
+          Cell aspect ({(selectedGrid?.cellAspect ?? 1).toFixed(2)})
+          <input
+            type="range" min={0.5} max={2} step={0.05}
+            value={selectedGrid?.cellAspect ?? 1}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              setGrids((prev) => prev.map((g) => g.id === selectedGrid?.id ? { ...g, cellAspect: v } : g));
+            }}
+            disabled={!selectedGrid}
+            style={{ width: 160 }}
+          />
+        </label>
       </div>
       
 
@@ -459,6 +472,7 @@ function setSelectedGridAngle(deg: number) {
                   rows={g.rows}
                   columns={g.columns}
                   cellSize={cellSizePx}
+                  cellAspect={g.cellAspect ?? productMap[g.panels[0]?.productId]?.aspect ?? 1}
                   panels={g.panels}
                   products={productMap}
                   selectedId={selectedPanelId}
