@@ -38,7 +38,7 @@ export default function ProductPanel({ panel, product, selected, width, height, 
         style={{
             width: "100%",
             height: "100%",
-            objectFit: "fill",
+            objectFit: "contain",
             display: "block",
             transform: `rotate(${panel.rotation}deg)`,
           }}
