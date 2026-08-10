@@ -361,6 +361,7 @@ function setSelectedGridAngle(deg: number) {
           <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, -1)} disabled={!selectedGrid}>– row</button>
           <button type="button" style={btn} onClick={() => resizeSelectedGrid(0, 1)} disabled={!selectedGrid}>+ row</button>
         </div>
+        </div>
 
         {/* Angle slider — paste here */}
         <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
