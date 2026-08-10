@@ -453,7 +453,8 @@ function setSelectedGridAngle(deg: number) {
                 outline: !previewMode && g.id === selectedGridId ? "2px solid rgba(155,111,212,0.9)" : "none",
                 transform: g.angleDeg ? `skewX(${g.angleDeg}deg)` : undefined,
                 transformOrigin: "center center",
-              }}>                  
+              }}>
+                <WallGrid
                   gridId={g.id}
                   rows={g.rows}
                   columns={g.columns}
@@ -463,6 +464,7 @@ function setSelectedGridAngle(deg: number) {
                   selectedId={selectedPanelId}
                   onPlace={placePanel}
                   onSelect={selectPanel}
+                  />
               </div>
             </div>
           ))}
