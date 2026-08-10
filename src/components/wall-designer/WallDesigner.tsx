@@ -142,6 +142,7 @@ export default function WallDesigner() {
       yPct: 0.02,
       columns: 2,
       rows: 2,
+      angleDeg: 0,
       layerOrder: maxLayer() + 1,
       panels: [],
     };
@@ -206,6 +207,7 @@ export default function WallDesigner() {
     setGrids([g]);
     setSelectedGridId(g.id);
     setSelectedPanelId(null);
+    angleDeg: 0,
   }
 // ── Save / load design to a .json file ──
   function saveDesign() {

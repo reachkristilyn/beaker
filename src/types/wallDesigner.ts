@@ -26,6 +26,7 @@ export type Grid = {
   columns: number;
   rows: number;
   layerOrder: number;
+  angleDeg: number; // 2D lean; 0 = head-on, +/- tilts opposite ways
   panels: PlacedPanel[];
 };
 
