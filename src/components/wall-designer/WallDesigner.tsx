@@ -464,8 +464,7 @@ function setSelectedGridAngle(deg: number) {
           [...grids].sort((a, b) => a.layerOrder - b.layerOrder).map((g) => (
             <div key={g.id} style={{ position: "absolute", left: g.xPct * imageWidthPx, top: g.yPct * imageWidthPx, zIndex: g.layerOrder }}>
               {/* Drag handle — grab THIS to move; click cells to place panels */}
-                                {!previewMode && g.id === selectedGridId && (
-
+                    {!previewMode && (g.id === selectedGridId || g.panels.some((p) => p.id === selectedPanelId)) && (
               <div
                 onPointerDown={(e) => onHandleDown(e, g)}
                 onPointerMove={onHandleMove}
