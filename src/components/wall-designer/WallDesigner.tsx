@@ -35,6 +35,7 @@ export default function WallDesigner() {
   const [selectedPanelId, setSelectedPanelId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string>(wallProducts[0]?.id ?? "");
+  const [history, setHistory] = useState<Grid[][]>([]);
 
   const imageRef = useRef<HTMLDivElement>(null);
   const [imageWidthPx, setImageWidthPx] = useState(0);
@@ -64,6 +65,15 @@ export default function WallDesigner() {
   // ── Panel placement / selection ──
   function placePanel(gridId: string, cellRow: number, cellCol: number) {
     if (!activeProductId) return;
+    // First click on an unselected grid = select it, don't place.
+    if (gridId !== selectedGridId) {
+      setSelectedGridId(gridId);
+      setSelectedPanelId(null);
+      return;
+    }
+    
+    pushHistory();  // ← only snapshot when we actually place
+ 
     setGrids((prev) =>
       prev.map((g) => {
         if (g.id !== gridId) return g;
@@ -92,6 +102,7 @@ export default function WallDesigner() {
 
   function rotateSelected() {
     if (!selected) return;
+    pushHistory();
     setGrids((prev) =>
       prev.map((g) =>
         g.id !== selected.grid.id
@@ -107,6 +118,7 @@ export default function WallDesigner() {
   }
   function deleteSelectedPanel() {
     if (!selected) return;
+    pushHistory();
     setGrids((prev) =>
       prev.map((g) =>
         g.id !== selected.grid.id
@@ -144,6 +156,7 @@ function setSelectedGridAngle(deg: number) {
 
   // ── Phase 2: add / duplicate / delete / layer order ──
   function addGrid() {
+    pushHistory();
     const g: Grid = {
       id: crypto.randomUUID(),
       xPct: 0.02,
@@ -161,6 +174,7 @@ function setSelectedGridAngle(deg: number) {
 
   function duplicateGrid() {
     if (!selectedGrid) return;
+    pushHistory();
     const copy: Grid = {
       ...selectedGrid,
       id: crypto.randomUUID(),
@@ -176,6 +190,7 @@ function setSelectedGridAngle(deg: number) {
 
   function deleteGrid() {
     if (!selectedGrid) return;
+    pushHistory();
     setGrids((prev) => prev.filter((g) => g.id !== selectedGrid.id));
     setSelectedGridId(null);
     setSelectedPanelId(null);
@@ -211,11 +226,26 @@ function setSelectedGridAngle(deg: number) {
   }
 
   function startOver() {
+    pushHistory();
     const g = makeStarterGrid();
     setGrids([g]);
     setSelectedGridId(g.id);
     setSelectedPanelId(null);
   }
+
+  function pushHistory() {
+    setHistory((h) => [...h.slice(-20), grids]); // keep last 20
+  }
+  function undo() {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      setGrids(h[h.length - 1]);
+      setSelectedGridId(null);
+      setSelectedPanelId(null);
+      return h.slice(0, -1);
+    });
+  }
+
 // ── Save / load design to a .json file ──
   function saveDesign() {
     const design = { version: 1, cellSizePct, grids };
@@ -398,6 +428,7 @@ function setSelectedGridAngle(deg: number) {
         <button type="button" style={btn} onClick={addGrid}>+ Add grid</button>
         <button type="button" style={btn} onClick={duplicateGrid} disabled={!selectedGrid}>Duplicate</button>
         <button type="button" style={btn} onClick={deleteGrid} disabled={!selectedGrid}>Delete grid</button>
+        <button type="button" style={btn} onClick={undo} disabled={history.length === 0}>Undo</button>
         <button type="button" style={btn} onClick={bringForward} disabled={!selectedGrid}>Bring forward</button>
         <button type="button" style={btn} onClick={sendBackward} disabled={!selectedGrid}>Send backward</button>
         <span style={{ width: 12 }} />
