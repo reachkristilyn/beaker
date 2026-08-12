@@ -6,8 +6,10 @@ import { wallProducts } from "@/data/wallProducts";
 import WallGrid from "./WallGrid";
 import { toPng } from "html-to-image";
 
-const VENUE_IMAGE = "/venues/ziegfeld.png";
-
+const VENUES = [
+  { id: "ziegfeld", name: "Ziegfeld", image: "/venues/ziegfeld.png" },
+  { id: "ziegfeldangle", name: "Ziegfeld Angle", image: "/venues/ziegfeldAngle.png" },
+];
 const ROTATIONS: Rotation[] = [0, 90, 180, 270];
 const nextRotation = (r: Rotation): Rotation =>
   ROTATIONS[(ROTATIONS.indexOf(r) + 1) % ROTATIONS.length];
@@ -36,6 +38,7 @@ export default function WallDesigner() {
   const [previewMode, setPreviewMode] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string>(wallProducts[0]?.id ?? "");
   const [history, setHistory] = useState<Grid[][]>([]);
+  const [venueImage, setVenueImage] = useState(VENUES[0].image);
 
   const imageRef = useRef<HTMLDivElement>(null);
   const [imageWidthPx, setImageWidthPx] = useState(0);
@@ -361,6 +364,7 @@ function setSelectedGridAngle(deg: number) {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+     
       {/* Row 1: square size + grid steppers */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 20 }}>
         <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
@@ -378,6 +382,16 @@ function setSelectedGridAngle(deg: number) {
           >
             {wallProducts.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </label>
+
+        <label style={{ display: "flex", flexDirection: "column", fontSize: 13, fontWeight: 500 }}>
+          Venue
+          <select value={venueImage} onChange={(e) => setVenueImage(e.target.value)}
+            style={{ marginTop: 4, padding: "6px 8px", borderRadius: 6, border: "1px solid #ccc" }}>
+            {VENUES.map((v) => (
+              <option key={v.id} value={v.image}>{v.name}</option>
             ))}
           </select>
         </label>
