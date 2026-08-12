@@ -472,7 +472,7 @@ function setSelectedGridAngle(deg: number) {
       {/* Venue + free-placed blocks */}
       <div ref={imageRef} style={{ position: "relative", width: "100%", maxWidth: 1000, margin: "0 auto" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={VENUE_IMAGE} alt="Venue backdrop" style={{ width: "100%", display: "block" }} draggable={false} />
+        <img src={venueImage} alt="Venue backdrop" style={{ width: "100%", display: "block" }} draggable={false} />
 
         {imageWidthPx > 0 &&
           [...grids].sort((a, b) => a.layerOrder - b.layerOrder).map((g) => (
