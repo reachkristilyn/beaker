@@ -38,6 +38,12 @@ export default function WallGrid({
   const panelAt = (cellRow: number, cellCol: number) =>
     panels.find((p) => p.cellRow === cellRow && p.cellCol === cellCol);
 
+const coveringPanel = (cellRow: number, cellCol: number) =>
+    panels.find((p) => {
+      const span = products[p.productId]?.rowSpan ?? 1;
+      return p.cellCol === cellCol && cellRow >= p.cellRow && cellRow < p.cellRow + span;
+    });
+
   return (
     <div
       role="grid"
@@ -53,17 +59,20 @@ export default function WallGrid({
       {Array.from({ length: rows }).map((_, r) =>
         Array.from({ length: columns }).map((_, c) => {
           const placed = panelAt(r, c);
+          const covered = coveringPanel(r, c);
+          // If a spanning panel covers this cell but doesn't start here, render nothing.
+          if (covered && !placed) return <div key={`${r}-${c}`} role="gridcell" />;          
           const product = placed ? products[placed.productId] : undefined;
 
           return (
-            <div key={`${r}-${c}`} role="gridcell" className="relative">
+            <div key={`${r}-${c}`} role="gridcell" className="relative" style={{ overflow: "visible" }}>
               {placed && product ? (
                 <ProductPanel
                   panel={placed}
                   product={product}
                   selected={placed.id === selectedId}
                   width={cellW}
-                  height={cellH}
+                  height={cellH * (product.rowSpan ?? 1)}
                   onSelect={() => onSelect(gridId, placed.id)}
                 />
               ) : (

@@ -80,8 +80,14 @@ export default function WallDesigner() {
     setGrids((prev) =>
       prev.map((g) => {
         if (g.id !== gridId) return g;
-        if (g.panels.some((p) => p.cellRow === cellRow && p.cellCol === cellCol)) return g;
-        const panel: PlacedPanel = {
+          const span = productMap[activeProductId]?.rowSpan ?? 1;
+        if (cellRow + span > g.rows) return g; // doesn't fit vertically
+          const overlaps = g.panels.some((p) => {
+          const ps = productMap[p.productId]?.rowSpan ?? 1;
+          return p.cellCol === cellCol &&
+            cellRow < p.cellRow + ps && cellRow + span > p.cellRow;
+        });
+        if (overlaps) return g;        const panel: PlacedPanel = {
           id: crypto.randomUUID(),
           productId: activeProductId,
           cellRow,
@@ -477,6 +483,7 @@ function setSelectedGridAngle(deg: number) {
         {imageWidthPx > 0 &&
           [...grids].sort((a, b) => a.layerOrder - b.layerOrder).map((g) => (
             <div key={g.id} style={{ position: "absolute", left: g.xPct * imageWidthPx, top: g.yPct * imageWidthPx, zIndex: g.layerOrder }}>
+             
               {/* Drag handle — grab THIS to move; click cells to place panels */}
                     {!previewMode && (g.id === selectedGridId || g.panels.some((p) => p.id === selectedPanelId)) && (
               <div

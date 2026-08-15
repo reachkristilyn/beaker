@@ -5,6 +5,7 @@ export type WallProduct = {
   name: string;
   image: string;
   panelSizeInches: number;
+  rowSpan?: number; // cells tall; default 1
   aspect?: number; // width ÷ height of the cell; absent = 1 (square). >1 = wider/shorter.
 };
 

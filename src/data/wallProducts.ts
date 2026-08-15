@@ -28,4 +28,20 @@ export const wallProducts: WallProduct[] = [
     panelSizeInches: PANEL_SIZE_INCHES,
     aspect: 1.3,   
   },
+
+  {
+    id: "pyramid",
+    name: "Pyramid",
+    image: "/products/pyramid.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+  },
+
+{
+    id: "ripple",
+    name: "Ripple",
+    image: "/products/ripple.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+    rowSpan: 2,
+  },
+
 ];
