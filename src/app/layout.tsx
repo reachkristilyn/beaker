@@ -64,11 +64,13 @@ export default function RootLayout({
             Beaker
           </a>
           <nav className={styles.toolTag}>
-            <a href="/research">Grant Research Lab · 01</a>
-            {" · "}
-            <a href="/wall-designer">Event Design Lab · 02</a>
-            {" · "}
-            <a href="/splats">Robotics Lab · 03</a> 
+            <a href="/research">Nonprofit Lab · 01</a>
+          
+            <a href="/wall-designer">Atomic Wall Lab · 02</a>
+            
+            <a href="/room-designer">Room Design Lab · 03</a>
+           
+            <a href="/splats">Robotics Lab · 04</a> 
           </nav>
         </header>
         {children}

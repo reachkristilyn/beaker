@@ -5,7 +5,7 @@ export default function SplatsPage() {
   return (
     <main className={styles.main}>
       <section className={styles.intro}>
-        <p className={styles.eyebrow}>Robotics Lab · Tool 03</p>
+        <p className={styles.eyebrow}>Robotics Lab · Tool 04</p>
         <h1 className={styles.title}>Gaussian Splat Robotics</h1>
         <p className={styles.lede}>
           A live 3D Gaussian splat scene with a robot traversing it — a scaffold
