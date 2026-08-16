@@ -2,7 +2,7 @@ import WallDesigner from "@/components/wall-designer/WallDesigner";
 import styles from "./page.module.css";
 
 export const metadata = {
-  title: "Wall Designer",
+  title: "ATOMIC Design Inc. Wall Designer",
 };
 
 export default function WallDesignerPage() {
@@ -10,9 +10,13 @@ export default function WallDesignerPage() {
     <main className={styles.main}>
       <div className={styles.intro}>
         <p className={styles.eyebrow}>Tool 02</p>
-        <h1 className={styles.title}>Modular Wall Designer</h1>
+        <h1 className={styles.title}>ATOMIC Modular Designer</h1>
         <p className={styles.lede}>
-          Size a wall, place panels, and preview the layout.
+         Pick your venue, size a wall, place panels, and preview the layout using{" "}
+        <a href="https://www.atomicdesign.tv" target="_blank" rel="noopener noreferrer">
+         Atomic Design Inc.
+        </a>{" "}
+         product.
         </p>
       </div>
       <WallDesigner />

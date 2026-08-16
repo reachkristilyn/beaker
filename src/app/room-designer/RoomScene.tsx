@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
 import { PANEL_SIZE_INCHES } from "@/data/wallProducts";
+import CalibrationPanel from "./CalibrationPanel";
 import styles from "./page.module.css";
 
 // Public indoor room (Mip-NeRF 360 "room" scene, 51 MB). Loaded from the HF CDN
@@ -18,8 +19,22 @@ const SPLAT_PRESCALE = 100;
 // Benchmark scenes rarely import Y-up. Tune these once you can see the room.
 const SPLAT_ROTATION = new THREE.Euler(Math.PI, 0, 0);
 
+type SceneHandle = {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  controls: OrbitControls;
+  room: SplatMesh;
+  panel: THREE.Mesh;
+};
+
 export default function RoomScene() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<SceneHandle | null>(null);
+  const [isPicking, setIsPicking] = useState(false);
+  const [pickedCount, setPickedCount] = useState(0);
+  const [distanceInput, setDistanceInput] = useState("");
+  const [inchesPerUnit, setInchesPerUnit] = useState<number | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -92,6 +107,8 @@ export default function RoomScene() {
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
 
+    sceneRef.current = { renderer, scene, camera, controls, room, panel };
+
     // --- Loop ---
     renderer.setAnimationLoop(() => {
       controls.update();
@@ -99,6 +116,7 @@ export default function RoomScene() {
     });
 
     return () => {
+      sceneRef.current = null;
       renderer.setAnimationLoop(null);
       resizeObserver.disconnect();
       controls.dispose();
@@ -109,5 +127,19 @@ export default function RoomScene() {
     };
   }, []);
 
-  return <div ref={containerRef} className={styles.viewer} />;
+return (
+  <div className={styles.viewerWrap}>
+    <div ref={containerRef} className={styles.viewer} />
+    <CalibrationPanel
+      pickedCount={pickedCount}
+      isPicking={isPicking}
+      distanceInput={distanceInput}
+      onDistanceChange={setDistanceInput}
+      onStartPicking={() => setIsPicking(true)}
+      onApply={() => {}}
+      onReset={() => {}}
+      inchesPerUnit={inchesPerUnit}
+    />
+  </div>
+);
 }
