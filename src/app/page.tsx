@@ -7,6 +7,9 @@ const tools = [
   { href: "/splats", name: "Robotics Lab", tag: "04" },
 ];
 
+
+
+
 export default function Home() {
   return (
     <main className={styles.main}>

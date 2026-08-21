@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import styles from "./layout.module.css";
 import Image from "next/image";
+import Navlinks from "./Navlinks.tsx"
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -63,15 +64,9 @@ export default function RootLayout({
         />
             Beaker
           </a>
-          <nav className={styles.toolTag}>
-            <a href="/research">Nonprofit Lab · 01</a>
-          
-            <a href="/wall-designer">Atomic Wall Lab · 02</a>
-            
-            <a href="/room-designer">Room Design Lab · 03</a>
-           
-            <a href="/splats">Robotics Lab · 04</a> 
-          </nav>
+        
+        <NavLinks />
+
         </header>
         {children}
         <footer className={styles.footer}>

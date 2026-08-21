@@ -27,6 +27,43 @@
   flex-shrink: 0;
 }
 
+/* Hamburger button — hidden on desktop */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 4px 8px;
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  /* Hide nav by default on mobile */
+  .toolTag {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    gap: 4px;
+    z-index: 100;
+  }
+
+  /* Show when toggled open */
+  .toolTag.navOpen {
+    display: flex;
+  }
+}
+
 .toolTag {
   flex: 1;
   display: flex;
