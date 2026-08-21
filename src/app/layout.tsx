@@ -3,7 +3,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import styles from "./layout.module.css";
 import Image from "next/image";
-import Navlinks from "./Navlinks.tsx"
+import NavLinks from "./NavLinks.tsx"
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
