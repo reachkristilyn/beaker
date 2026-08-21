@@ -56,8 +56,7 @@ export default function Home() {
         <h1 className={styles.title}>Research a nonprofit</h1>
         <p className={styles.lede}>
           Enter an organization to generate a structured research brief:
-          mission, leadership, financials, current funders, and where new
-          grants might fit.
+          mission, leadership, financials, current funders, and available government grants. 
         </p>
       </section>
 
