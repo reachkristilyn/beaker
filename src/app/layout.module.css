@@ -7,6 +7,7 @@
   margin: 0 auto;
   padding: 20px 24px;
   border-bottom: 1px solid var(--line);
+  position: relative;
 }
 
 .wordmark {
@@ -38,33 +39,8 @@
   padding: 4px 8px;
 }
 
-@media (max-width: 768px) {
-  .hamburger {
-    display: block;
-  }
-
   /* Hide nav by default on mobile */
-  .toolTag {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px;
-    gap: 4px;
-    z-index: 100;
-  }
-
-  /* Show when toggled open */
-  .toolTag.navOpen {
-    display: flex;
-  }
-}
-
-.toolTag {
+ .toolTag {
   flex: 1;
   display: flex;
   justify-content: space-between;
@@ -74,6 +50,17 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+  /* Show when toggled open */
+  .toolTag.navOpen {
+    display: flex;
+  }
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
 }
 
 .footer {

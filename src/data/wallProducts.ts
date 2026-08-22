@@ -36,6 +36,13 @@ export const wallProducts: WallProduct[] = [
     panelSizeInches: PANEL_SIZE_INCHES,
   },
 
+ {
+    id: "zeddit",
+    name: "Zeddit Gold",
+    image: "/products/zeddit.png",
+    panelSizeInches: PANEL_SIZE_INCHES,
+  },
+
 {
     id: "ripple",
     name: "Ripple",
