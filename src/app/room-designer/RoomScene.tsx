@@ -10,7 +10,7 @@ import styles from "./page.module.css";
 
 // Public indoor room (Mip-NeRF 360 "room" scene, 51 MB). Loaded from the HF CDN
 // for Phase A; vendor into public/splats/ once confirmed working.
-const SPLAT_URL = "/splats/room.splat";
+const SPLAT_URL = "https://vyiohij2d53jlpdw.public.blob.vercel-storage.com/splats/room.splat";
 
 // 1 scene unit = 1 inch. The splat's own units are arbitrary until Phase B
 // calibration; SPLAT_PRESCALE just makes it a viewable size for now.
