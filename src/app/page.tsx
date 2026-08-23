@@ -3,7 +3,7 @@ import styles from "./landing.module.css";
 const tools = [
   { href: "/research", name: "Nonprofit Lab", tag: "01" },
   { href: "/wall-designer", name: "Atomic Wall Lab", tag: "02" },
-  { href: "/room-designer", name: "Room Design Lab", tag: "03" },
+  { href: "/room-designer", name: "Space Design Lab", tag: "03" },
   { href: "/splats", name: "Robotics Lab", tag: "04" },
 ];
 
