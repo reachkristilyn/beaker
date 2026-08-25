@@ -61,6 +61,24 @@
   .hamburger {
     display: block;
   }
+
+  .toolTag {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    gap: 4px;
+    z-index: 100;
+  }
+
+  .toolTag.navOpen {
+    display: flex;
+  }
 }
 
 .footer {
