@@ -18,7 +18,7 @@ export default function NavLinks() {
       <nav className={`${styles.toolTag} ${open ? styles.navOpen : ""}`}>
         <a href="/research" onClick={() => setOpen(false)}>Nonprofit Lab · 01</a>
         <a href="/wall-designer" onClick={() => setOpen(false)}>Atomic Wall Lab · 02</a>
-        <a href="/room-designer" onClick={() => setOpen(false)}>Room Design Lab · 03</a>
+        <a href="/room-designer" onClick={() => setOpen(false)}>Space Design Lab · 03</a>
         <a href="/splats" onClick={() => setOpen(false)}>Robotics Lab · 04</a>
       </nav>
     </>
