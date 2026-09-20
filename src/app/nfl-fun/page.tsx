@@ -12,6 +12,7 @@ interface Player {
   salary: string;
   tier: Tier;
   note: string;
+  espnId?: string;
 }
 
 interface Slip {
@@ -25,7 +26,46 @@ interface Slip {
 
 const STORE_KEY = "nfl-fun:board";
 const TIERS: Tier[] = ["Core", "Watch", "Fade"];
-const POSITIONS = ["QB", "RB", "WR", "TE", "K", "D"];
+interface RosterPlayer {
+  id: string;
+  name: string;
+  pos: string;
+}
+
+const TEAMS: { abbr: string; name: string }[] = [
+  { abbr: "ARI", name: "Arizona Cardinals" },
+  { abbr: "ATL", name: "Atlanta Falcons" },
+  { abbr: "BAL", name: "Baltimore Ravens" },
+  { abbr: "BUF", name: "Buffalo Bills" },
+  { abbr: "CAR", name: "Carolina Panthers" },
+  { abbr: "CHI", name: "Chicago Bears" },
+  { abbr: "CIN", name: "Cincinnati Bengals" },
+  { abbr: "CLE", name: "Cleveland Browns" },
+  { abbr: "DAL", name: "Dallas Cowboys" },
+  { abbr: "DEN", name: "Denver Broncos" },
+  { abbr: "DET", name: "Detroit Lions" },
+  { abbr: "GB", name: "Green Bay Packers" },
+  { abbr: "HOU", name: "Houston Texans" },
+  { abbr: "IND", name: "Indianapolis Colts" },
+  { abbr: "JAX", name: "Jacksonville Jaguars" },
+  { abbr: "KC", name: "Kansas City Chiefs" },
+  { abbr: "LV", name: "Las Vegas Raiders" },
+  { abbr: "LAC", name: "Los Angeles Chargers" },
+  { abbr: "LAR", name: "Los Angeles Rams" },
+  { abbr: "MIA", name: "Miami Dolphins" },
+  { abbr: "MIN", name: "Minnesota Vikings" },
+  { abbr: "NE", name: "New England Patriots" },
+  { abbr: "NO", name: "New Orleans Saints" },
+  { abbr: "NYG", name: "New York Giants" },
+  { abbr: "NYJ", name: "New York Jets" },
+  { abbr: "PHI", name: "Philadelphia Eagles" },
+  { abbr: "PIT", name: "Pittsburgh Steelers" },
+  { abbr: "SF", name: "San Francisco 49ers" },
+  { abbr: "SEA", name: "Seattle Seahawks" },
+  { abbr: "TB", name: "Tampa Bay Buccaneers" },
+  { abbr: "TEN", name: "Tennessee Titans" },
+  { abbr: "WSH", name: "Washington Commanders" },
+];
 
 const css = `
 .nff {
@@ -64,7 +104,8 @@ const css = `
 .nff .row { display: grid; gap: 8px; margin-bottom: 8px; }
 .nff .r4 { grid-template-columns: 2fr 0.9fr 0.9fr 1.1fr; }
 .nff .r2 { grid-template-columns: 1fr 1fr; }
-@media (max-width: 560px) { .nff .r4 { grid-template-columns: 1fr 1fr; } }
+.nff .r3 { grid-template-columns: 1fr 1fr auto; }
+@media (max-width: 560px) { .nff .r4, .nff .r3 { grid-template-columns: 1fr 1fr; } }
 
 .nff button { font: inherit; cursor: pointer; border-radius: 3px; border: 1px solid var(--ink); background: var(--ink); color: #fff; padding: 7px 14px; }
 .nff button.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
@@ -121,14 +162,34 @@ export default function NflFunPage() {
   const [query, setQuery] = useState("");
   const [label, setLabel] = useState("");
 
-  const [draft, setDraft] = useState<Omit<Player, "id">>({
-    name: "",
-    team: "",
-    pos: "WR",
-    salary: "",
-    tier: "Core",
-    note: "",
-  });
+  const [draft, setDraft] = useState({ salary: "", tier: "Core" as Tier, note: "" });
+  const [team, setTeam] = useState("");
+  const [pick, setPick] = useState("");
+  const [teamRoster, setTeamRoster] = useState<RosterPlayer[]>([]);
+  const [rosterState, setRosterState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+
+  useEffect(() => {
+    if (!team) {
+      setTeamRoster([]);
+      setRosterState("idle");
+      return;
+    }
+    let cancelled = false;
+    setRosterState("loading");
+    fetch(`/api/nfl-fun?team=${team}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        if (cancelled) return;
+        setTeamRoster(d.players || []);
+        setRosterState("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setRosterState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [team]);
 
   useEffect(() => {
     try {
@@ -162,16 +223,33 @@ export default function NflFunPage() {
   const remaining = cap - spend;
   const teams = [...new Set(roster.map((p) => p.team).filter(Boolean))];
 
+  const available = teamRoster.filter((r) => !players.some((p) => p.espnId === r.id));
+
   const filtered = players.filter((p) => {
+    if (team && p.team !== team) return false;
     const q = query.trim().toLowerCase();
-    if (!q) return true;
+        if (!q) return true;
     return (p.name + " " + p.team + " " + p.pos + " " + p.note).toLowerCase().includes(q);
   });
 
   function addPlayer() {
-    if (!draft.name.trim()) return;
-    setPlayers([...players, { ...draft, name: draft.name.trim(), team: draft.team.trim().toUpperCase(), id: uid() }]);
-    setDraft({ name: "", team: draft.team, pos: draft.pos, salary: "", tier: "Core", note: "" });
+    const src = teamRoster.find((r) => r.id === pick);
+    if (!src) return;
+    setPlayers([
+      ...players,
+      {
+        id: uid(),
+        espnId: src.id,
+        name: src.name,
+        team,
+        pos: src.pos,
+        salary: draft.salary,
+        tier: draft.tier,
+        note: draft.note,
+      },
+    ]);
+    setPick("");
+    setDraft({ salary: "", tier: draft.tier, note: "" });
   }
 
   function removePlayer(id: string) {
@@ -242,25 +320,37 @@ export default function NflFunPage() {
           <section>
             <h2>Players you track</h2>
 
-            <div className="row r4">
-              <input placeholder="Player name" value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                onKeyDown={(e) => e.key === "Enter" && addPlayer()} aria-label="Player name" />
-              <input placeholder="Team" value={draft.team}
-                onChange={(e) => setDraft({ ...draft, team: e.target.value })} aria-label="Team" />
-              <select value={draft.pos} onChange={(e) => setDraft({ ...draft, pos: e.target.value })} aria-label="Position">
-                {POSITIONS.map((p) => <option key={p}>{p}</option>)}
+            <div className="row r2">
+              <select value={team} onChange={(e) => { setTeam(e.target.value); setPick(""); }} aria-label="Team">
+                <option value="">All teams</option>
+                {TEAMS.map((t) => <option key={t.abbr} value={t.abbr}>{t.name}</option>)}
               </select>
+              <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Player"
+                disabled={!team || rosterState !== "ready"}>
+                <option value="">
+                  {!team
+                    ? "Pick a team first"
+                    : rosterState === "loading"
+                    ? "Loading roster"
+                    : rosterState === "error"
+                    ? "Roster unavailable"
+                    : "Pick a player"}
+                </option>
+                {available.map((r) => (
+                  <option key={r.id} value={r.id}>{r.pos} · {r.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="row r3">
               <input className="mono" placeholder="Salary" type="number" step="100" value={draft.salary}
                 onChange={(e) => setDraft({ ...draft, salary: e.target.value })} aria-label="Salary" />
-            </div>
-            <div className="row r2">
               <select value={draft.tier}
                 onChange={(e) => setDraft({ ...draft, tier: e.target.value as Tier })} aria-label="Tier">
                 {TIERS.map((t) => <option key={t}>{t}</option>)}
               </select>
-              <button onClick={addPlayer}>Add player</button>
+              <button onClick={addPlayer} disabled={!pick}>Add player</button>
             </div>
+                        
             <textarea placeholder="Why you like or avoid him. Volume, matchup, red zone role, whatever you keep forgetting."
               value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} aria-label="Note" />
 
