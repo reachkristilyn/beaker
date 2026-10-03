@@ -20,6 +20,8 @@ export default function NavLinks() {
         <a href="/wall-designer" onClick={() => setOpen(false)}>Atomic Inc. Wall Lab · 02</a>
         <a href="/room-designer" onClick={() => setOpen(false)}>Space Design Lab · 03</a>
         <a href="/splats" onClick={() => setOpen(false)}>Robotics Lab · 04</a>
+        <a href="/nfl-fun" onClick={() => setOpen(false)}>NFL Fun Lab · 05</a>
+            
       </nav>
     </>
   );
