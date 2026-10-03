@@ -42,3 +42,16 @@
     font-size: 0.85rem;
     color: var(--muted);
   }
+
+  .cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.toolBlurb {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 400;
+}
