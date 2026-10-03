@@ -13,6 +13,7 @@ interface Player {
   tier: Tier;
   note: string;
   espnId?: string;
+  salaryUpdated?: string;
 }
 
 interface Slip {
@@ -22,15 +23,18 @@ interface Slip {
   flex: string[];
   spend: number;
   savedAt: string;
+  game?: string;
 }
 
-const STORE_KEY = "nfl-fun:board";
-const TIERS: Tier[] = ["Core", "Watch", "Fade"];
 interface RosterPlayer {
   id: string;
   name: string;
   pos: string;
 }
+
+const STORE_KEY = "nfl-fun:board";
+const TIERS: Tier[] = ["Core", "Watch", "Fade"];
+const STALE_DAYS = 6;
 
 const TEAMS: { abbr: string; name: string }[] = [
   { abbr: "ARI", name: "Arizona Cardinals" },
@@ -102,10 +106,8 @@ const css = `
   outline: 2px solid var(--ink); outline-offset: 1px;
 }
 .nff .row { display: grid; gap: 8px; margin-bottom: 8px; }
-.nff .r4 { grid-template-columns: 2fr 0.9fr 0.9fr 1.1fr; }
 .nff .r2 { grid-template-columns: 1fr 1fr; }
-.nff .r3 { grid-template-columns: 1fr 1fr auto; }
-@media (max-width: 560px) { .nff .r4, .nff .r3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .nff .r2 { grid-template-columns: 1fr; } }
 
 .nff button { font: inherit; cursor: pointer; border-radius: 3px; border: 1px solid var(--ink); background: var(--ink); color: #fff; padding: 7px 14px; }
 .nff button.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
@@ -114,14 +116,19 @@ const css = `
 .nff button.link:hover { color: var(--ink); }
 .nff button:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.nff .gamebar { border: 1px solid var(--ink); border-radius: 3px; padding: 12px; margin-bottom: 18px; background: #fff; }
+.nff .ghead { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+
 .nff .tierhead { font-size: 0.78rem; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--rule); padding-bottom: 4px; margin: 18px 0 6px; display: flex; justify-content: space-between; }
-.nff .p { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.nff .p { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
 .nff .p .name { font-weight: 500; }
 .nff .p .meta { color: var(--muted); font-size: 0.78rem; }
 .nff .p .note { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
 .nff .p .grow { flex: 1; min-width: 0; }
 .nff .p .acts { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
 .nff .p.used { opacity: 0.45; }
+.nff .sal { width: 90px; flex-shrink: 0; padding: 4px 6px; font-size: 0.8rem; }
+.nff .sal.stale { border-color: var(--warn); background: #fdf4ea; }
 .nff .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
 .nff .dot.Core { background: var(--mvp); }
 .nff .dot.Watch { background: var(--muted); }
@@ -150,6 +157,7 @@ const css = `
 
 const money = (n: string | number) => "$" + (Number(n) || 0).toLocaleString("en-US");
 const uid = () => Math.random().toString(36).slice(2, 9);
+const teamName = (abbr: string) => TEAMS.find((t) => t.abbr === abbr)?.name ?? abbr;
 
 export default function NflFunPage() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -162,11 +170,14 @@ export default function NflFunPage() {
   const [query, setQuery] = useState("");
   const [label, setLabel] = useState("");
 
-  const [draft, setDraft] = useState({ salary: "", tier: "Core" as Tier, note: "" });
+  const [draft, setDraft] = useState({ tier: "Core" as Tier, note: "" });
   const [team, setTeam] = useState("");
   const [pick, setPick] = useState("");
   const [teamRoster, setTeamRoster] = useState<RosterPlayer[]>([]);
   const [rosterState, setRosterState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+
+  const [gameA, setGameA] = useState("");
+  const [gameB, setGameB] = useState("");
 
   useEffect(() => {
     if (!team) {
@@ -215,22 +226,55 @@ export default function NflFunPage() {
     }
   }, [players, lineups, cap, loaded]);
 
-  const byId = useMemo(() => Object.fromEntries(players.map((p) => [p.id, p])) as Record<string, Player>, [players]);
+  const byId = useMemo(
+    () => Object.fromEntries(players.map((p) => [p.id, p])) as Record<string, Player>,
+    [players]
+  );
   const inLineup = useMemo(() => new Set([mvp, ...flex].filter(Boolean) as string[]), [mvp, flex]);
 
   const roster = ([mvp, ...flex].filter(Boolean) as string[]).map((id) => byId[id]).filter(Boolean);
   const spend = roster.reduce((s, p) => s + (Number(p.salary) || 0), 0);
   const remaining = cap - spend;
-  const teams = [...new Set(roster.map((p) => p.team).filter(Boolean))];
+  const slipTeams = [...new Set(roster.map((p) => p.team).filter(Boolean))];
 
   const available = teamRoster.filter((r) => !players.some((p) => p.espnId === r.id));
 
+  const gameTeams = [gameA, gameB].filter(Boolean);
+
   const filtered = players.filter((p) => {
-    if (team && p.team !== team) return false;
+    if (gameTeams.length && !gameTeams.includes(p.team)) return false;
     const q = query.trim().toLowerCase();
-        if (!q) return true;
+    if (!q) return true;
     return (p.name + " " + p.team + " " + p.pos + " " + p.note).toLowerCase().includes(q);
   });
+
+  const groups: { key: string; label: string; items: Player[] }[] = gameTeams.length
+    ? gameTeams.map((t) => ({
+        key: t,
+        label: teamName(t),
+        items: filtered
+          .filter((p) => p.team === t)
+          .sort(
+            (a, b) =>
+              TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier) || a.name.localeCompare(b.name)
+          ),
+      }))
+    : TIERS.map((t) => ({ key: t, label: t, items: filtered.filter((p) => p.tier === t) }));
+
+  const isStale = (p: Player) =>
+    !p.salary ||
+    !p.salaryUpdated ||
+    Date.now() - new Date(p.salaryUpdated).getTime() > STALE_DAYS * 86400000;
+
+  const missingSalary = roster.filter((p) => !p.salary).length;
+
+  function setSalary(id: string, value: string) {
+    setPlayers(
+      players.map((p) =>
+        p.id === id ? { ...p, salary: value, salaryUpdated: new Date().toISOString() } : p
+      )
+    );
+  }
 
   function addPlayer() {
     const src = teamRoster.find((r) => r.id === pick);
@@ -243,13 +287,13 @@ export default function NflFunPage() {
         name: src.name,
         team,
         pos: src.pos,
-        salary: draft.salary,
+        salary: "",
         tier: draft.tier,
         note: draft.note,
       },
     ]);
     setPick("");
-    setDraft({ salary: "", tier: draft.tier, note: "" });
+    setDraft({ tier: draft.tier, note: "" });
   }
 
   function removePlayer(id: string) {
@@ -259,7 +303,9 @@ export default function NflFunPage() {
   }
 
   function cycleTier(id: string) {
-    setPlayers(players.map((p) => (p.id === id ? { ...p, tier: TIERS[(TIERS.indexOf(p.tier) + 1) % 3] } : p)));
+    setPlayers(
+      players.map((p) => (p.id === id ? { ...p, tier: TIERS[(TIERS.indexOf(p.tier) + 1) % 3] } : p))
+    );
   }
 
   function slotIn(id: string, asMvp: boolean) {
@@ -276,7 +322,15 @@ export default function NflFunPage() {
   function saveLineup() {
     if (roster.length === 0) return;
     setLineups([
-      { id: uid(), label: label.trim() || "Untitled slip", mvp, flex: [...flex], spend, savedAt: new Date().toISOString() },
+      {
+        id: uid(),
+        label: label.trim() || "Untitled slip",
+        mvp,
+        flex: [...flex],
+        spend,
+        savedAt: new Date().toISOString(),
+        game: gameTeams.length === 2 ? gameTeams.join(" / ") : undefined,
+      },
       ...lineups,
     ]);
     setLabel("");
@@ -286,15 +340,25 @@ export default function NflFunPage() {
     setMvp(l.mvp && byId[l.mvp] ? l.mvp : null);
     setFlex((l.flex || []).filter((id) => byId[id]));
     setLabel(l.label);
+    if (l.game) {
+      const [a, b] = l.game.split(" / ");
+      setGameA(a || "");
+      setGameB(b || "");
+    }
   }
 
   const slipText = () =>
     [
       label || "Slip",
-      mvp && byId[mvp] ? `MVP  ${byId[mvp].name} (${byId[mvp].team}) ${money(byId[mvp].salary)}` : "MVP  empty",
+      gameTeams.length === 2 ? gameTeams.join(" at ") : "",
+      mvp && byId[mvp]
+        ? `MVP  ${byId[mvp].name} (${byId[mvp].team}) ${money(byId[mvp].salary)}`
+        : "MVP  empty",
       ...flex.map((id) => `FLEX ${byId[id].name} (${byId[id].team}) ${money(byId[id].salary)}`),
       `Total ${money(spend)} of ${money(cap)}`,
-    ].join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
 
   return (
     <div className="nff">
@@ -318,11 +382,30 @@ export default function NflFunPage() {
 
         <div className="cols">
           <section>
+            <div className="gamebar">
+              <div className="ghead">This week&apos;s game</div>
+              <div className="row r2" style={{ marginBottom: 0 }}>
+                <select value={gameA} onChange={(e) => setGameA(e.target.value)} aria-label="Team one">
+                  <option value="">Team one</option>
+                  {TEAMS.map((t) => <option key={t.abbr} value={t.abbr}>{t.name}</option>)}
+                </select>
+                <select value={gameB} onChange={(e) => setGameB(e.target.value)} aria-label="Team two">
+                  <option value="">Team two</option>
+                  {TEAMS.map((t) => <option key={t.abbr} value={t.abbr}>{t.name}</option>)}
+                </select>
+              </div>
+              {gameTeams.length > 0 && (
+                <button className="link" onClick={() => { setGameA(""); setGameB(""); }}>
+                  show all teams
+                </button>
+              )}
+            </div>
+
             <h2>Players you track</h2>
 
             <div className="row r2">
-              <select value={team} onChange={(e) => { setTeam(e.target.value); setPick(""); }} aria-label="Team">
-                <option value="">All teams</option>
+              <select value={team} onChange={(e) => { setTeam(e.target.value); setPick(""); }} aria-label="Add from team">
+                <option value="">Add from team</option>
                 {TEAMS.map((t) => <option key={t.abbr} value={t.abbr}>{t.name}</option>)}
               </select>
               <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Player"
@@ -341,16 +424,14 @@ export default function NflFunPage() {
                 ))}
               </select>
             </div>
-            <div className="row r3">
-              <input className="mono" placeholder="Salary" type="number" step="100" value={draft.salary}
-                onChange={(e) => setDraft({ ...draft, salary: e.target.value })} aria-label="Salary" />
+            <div className="row r2">
               <select value={draft.tier}
                 onChange={(e) => setDraft({ ...draft, tier: e.target.value as Tier })} aria-label="Tier">
                 {TIERS.map((t) => <option key={t}>{t}</option>)}
               </select>
               <button onClick={addPlayer} disabled={!pick}>Add player</button>
             </div>
-                        
+
             <textarea placeholder="Why you like or avoid him. Volume, matchup, red zone role, whatever you keep forgetting."
               value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} aria-label="Note" />
 
@@ -365,24 +446,42 @@ export default function NflFunPage() {
               </p>
             )}
 
-            {TIERS.map((tier) => {
-              const group = filtered.filter((p) => p.tier === tier);
-              if (!group.length) return null;
+            {players.length > 0 && filtered.length === 0 && (
+              <p className="empty-state">
+                No saved players for this matchup yet. Use the team dropdown above to add some.
+              </p>
+            )}
+
+            {groups.map((g) => {
+              if (!g.items.length) return null;
               return (
-                <div key={tier}>
-                  <div className="tierhead"><span>{tier}</span><span className="mono">{group.length}</span></div>
-                  {group.map((p) => (
+                <div key={g.key}>
+                  <div className="tierhead">
+                    <span>{g.label}</span>
+                    <span className="mono">{g.items.length}</span>
+                  </div>
+                  {g.items.map((p) => (
                     <div key={p.id} className={"p" + (inLineup.has(p.id) ? " used" : "")}>
                       <span className={"dot " + p.tier} />
                       <div className="grow">
                         <div>
                           <span className="name">{p.name}</span>{" "}
-                          <span className="meta mono">
-                            {[p.team, p.pos, p.salary ? money(p.salary) : null].filter(Boolean).join(" · ")}
-                          </span>
+                          <span className="meta mono">{p.team} · {p.pos}</span>
                         </div>
                         {p.note && <div className="note">{p.note}</div>}
                       </div>
+                      <input
+                        className={"sal mono" + (isStale(p) ? " stale" : "")}
+                        type="number"
+                        step="100"
+                        placeholder="salary"
+                        value={p.salary}
+                        onChange={(e) => setSalary(p.id, e.target.value)}
+                        aria-label={`Salary for ${p.name}`}
+                        title={p.salaryUpdated
+                          ? `Set ${new Date(p.salaryUpdated).toLocaleDateString()}`
+                          : "No salary set yet"}
+                      />
                       <div className="acts">
                         <button className="ghost" style={{ padding: "3px 8px", fontSize: "0.75rem" }}
                           onClick={() => slotIn(p.id, true)}>{mvp === p.id ? "MVP ✓" : "MVP"}</button>
@@ -457,10 +556,15 @@ export default function NflFunPage() {
                 {roster.length > 0 && (
                   <div className="capline" style={{ color: "var(--muted)", marginTop: 2 }}>
                     <span>{roster.length} of 5 filled</span>
-                    <span>{teams.length ? teams.join(" / ") : "no teams set"}</span>
+                    <span>{slipTeams.length ? slipTeams.join(" / ") : "no teams set"}</span>
                   </div>
                 )}
-                {teams.length === 1 && roster.length > 1 && (
+                {missingSalary > 0 && (
+                  <p className="flag">
+                    {missingSalary} player{missingSalary > 1 ? "s" : ""} with no salary entered, so the total is low.
+                  </p>
+                )}
+                {slipTeams.length === 1 && roster.length > 1 && (
                   <p className="flag">
                     All five from one team. Most single game contests require players from both teams, so check the contest rules.
                   </p>
@@ -485,7 +589,14 @@ export default function NflFunPage() {
             {lineups.map((l) => (
               <div className="saved" key={l.id}>
                 <div className="t">
-                  <strong style={{ fontWeight: 500 }}>{l.label}</strong>
+                  <strong style={{ fontWeight: 500 }}>
+                    {l.label}
+                    {l.game && (
+                      <span className="mono" style={{ fontWeight: 400, color: "var(--muted)", fontSize: "0.78rem" }}>
+                        {" · "}{l.game}
+                      </span>
+                    )}
+                  </strong>
                   <span className="mono" style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{money(l.spend)}</span>
                 </div>
                 <div className="sub" style={{ marginTop: 2 }}>
